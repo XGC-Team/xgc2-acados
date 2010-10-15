@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
-version: 0.1.0-17
+version: 0.1.0-18
 kind: toolchain-apt
 summary: System-level acados solver stack and Python code-generation dependencies
   for XGC2 projects on Ubuntu 18.04, 20.04, 22.04, and 24.04.
@@ -36,8 +36,8 @@ usage:
 
     MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
-    CasADi and its Python support modules are provided by the XGC2 build image
-    and copied into the package. Product CI does not pip-install them.
+    CasADi and its Python support modules are provided by the XGC2 build image and
+    copied into the package. Product CI does not pip-install them.
 
     setup.bash defaults MPLBACKEND to Agg for headless robot and CI runtime.
 
@@ -49,10 +49,10 @@ ownership:
   - /etc/ld.so.conf.d/xgc2-acados.conf
 release:
   apt_versions:
-    bionic: 0.1.0-17~bionic
-    focal: 0.1.0-17~focal
-    jammy: 0.1.0-17~jammy
-    noble: 0.1.0-17~noble
+    bionic: 0.1.0-18~bionic
+    focal: 0.1.0-18~focal
+    jammy: 0.1.0-18~jammy
+    noble: 0.1.0-18~noble
 conflicts:
   apt_packages:
   - ros-noetic-xgc2-acados
