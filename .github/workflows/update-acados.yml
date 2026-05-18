@@ -2,7 +2,7 @@ name: update-acados
 
 on:
   schedule:
-    - cron: "0 2 * * 1"
+    - cron: "0 2 */2 * *"
   workflow_dispatch:
 
 permissions:
@@ -18,40 +18,46 @@ jobs:
         with:
           ref: noetic
 
-      - name: Check latest acados release
+      - name: Check latest acados main
         id: latest
         run: |
           set -euo pipefail
-          latest="$(python3 - <<'PY'
+          latest_sha="$(python3 - <<'PY'
 import json
 import urllib.request
 
-with urllib.request.urlopen("https://api.github.com/repos/acados/acados/releases/latest") as response:
+with urllib.request.urlopen("https://api.github.com/repos/acados/acados/commits/main") as response:
     data = json.load(response)
-print(data["tag_name"])
+print(data["sha"])
 PY
 )"
-          current="$(sed -n 's/^ACADOS_REF=//p' acados.lock | head -n 1)"
-          echo "latest=${latest}" >> "${GITHUB_OUTPUT}"
-          echo "current=${current}" >> "${GITHUB_OUTPUT}"
-          if [[ "${latest}" != "${current}" ]]; then
-            sed -i "s/^ACADOS_REF=.*/ACADOS_REF=${latest}/" acados.lock
+          current_ref="$(sed -n 's/^ACADOS_REF=//p' acados.lock | head -n 1)"
+          current_sha="$(sed -n 's/^ACADOS_SHA=//p' acados.lock | head -n 1)"
+          echo "latest_sha=${latest_sha}" >> "${GITHUB_OUTPUT}"
+          echo "latest_short=${latest_sha:0:12}" >> "${GITHUB_OUTPUT}"
+          echo "current_ref=${current_ref}" >> "${GITHUB_OUTPUT}"
+          echo "current_sha=${current_sha}" >> "${GITHUB_OUTPUT}"
+          if [[ "${current_ref}" != "main" || "${latest_sha}" != "${current_sha}" ]]; then
+            sed -i "s/^ACADOS_REF=.*/ACADOS_REF=main/" acados.lock
+            sed -i "s/^ACADOS_SHA=.*/ACADOS_SHA=${latest_sha}/" acados.lock
           fi
 
       - name: Create pull request
         id: cpr
-        if: steps.latest.outputs.latest != steps.latest.outputs.current
+        if: steps.latest.outputs.current_ref != 'main' || steps.latest.outputs.latest_sha != steps.latest.outputs.current_sha
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: bot/update-acados-${{ steps.latest.outputs.latest }}
+          branch: bot/update-acados-main-${{ steps.latest.outputs.latest_short }}
           base: noetic
-          title: "Update acados to ${{ steps.latest.outputs.latest }}"
-          commit-message: "Update acados to ${{ steps.latest.outputs.latest }}"
+          title: "Update acados main to ${{ steps.latest.outputs.latest_short }}"
+          commit-message: "Update acados main to ${{ steps.latest.outputs.latest_short }}"
           body: |
-            Automated acados vendor update.
+            Automated acados vendor update from upstream `main`.
 
-            - Previous: `${{ steps.latest.outputs.current }}`
-            - New: `${{ steps.latest.outputs.latest }}`
+            - Previous ref: `${{ steps.latest.outputs.current_ref }}`
+            - Previous SHA: `${{ steps.latest.outputs.current_sha }}`
+            - New ref: `main`
+            - New SHA: `${{ steps.latest.outputs.latest_sha }}`
 
             This PR must pass package compliance and Noetic build/test before merge.
 
