@@ -3,12 +3,19 @@ if(DEFINED _ACADOS_VENDOR_EXTRAS_INCLUDED)
 endif()
 set(_ACADOS_VENDOR_EXTRAS_INCLUDED TRUE)
 
-get_filename_component(_ACADOS_VENDOR_DEVEL_PREFIX
-  "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+if(DEFINED acados_vendor_DIR)
+  get_filename_component(_ACADOS_VENDOR_DEVEL_PREFIX
+    "${acados_vendor_DIR}/../../.." ABSOLUTE)
+elseif(DEFINED CATKIN_DEVEL_PREFIX)
+  set(_ACADOS_VENDOR_DEVEL_PREFIX "${CATKIN_DEVEL_PREFIX}")
+else()
+  get_filename_component(_ACADOS_VENDOR_DEVEL_PREFIX
+    "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+endif()
 
 set(ACADOS_VENDOR_INSTALL_DIR
   "${_ACADOS_VENDOR_DEVEL_PREFIX}/.acados_vendor/install"
-  CACHE PATH "acados vendor installation prefix")
+  CACHE PATH "acados vendor installation prefix" FORCE)
 
 set(ACADOS_VENDOR_INCLUDE_DIRS
   "${ACADOS_VENDOR_INSTALL_DIR}/include"
