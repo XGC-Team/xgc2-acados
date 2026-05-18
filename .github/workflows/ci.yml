@@ -18,14 +18,14 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install CI tools
         run: |
           set -euo pipefail
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Trust checkout directory
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
@@ -49,14 +49,14 @@ jobs:
     env:
       ACADOS_VENDOR_JOBS: "2"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install CI tools
         run: |
           set -euo pipefail
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Trust checkout directory
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
@@ -65,8 +65,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
-          git -C "${GITHUB_WORKSPACE}" archive HEAD | \
-            tar -x -C "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
+          tar \
+            --exclude=.git \
+            --exclude=.ci \
+            -C "${GITHUB_WORKSPACE}" \
+            -cf - . | tar -x -C "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
 
       - name: Build and run probe tests
         run: |
