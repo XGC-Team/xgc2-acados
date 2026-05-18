@@ -23,14 +23,14 @@ jobs:
         run: |
           set -euo pipefail
           latest_sha="$(python3 - <<'PY'
-import json
-import urllib.request
+          import json
+          import urllib.request
 
-with urllib.request.urlopen("https://api.github.com/repos/acados/acados/commits/main") as response:
-    data = json.load(response)
-print(data["sha"])
-PY
-)"
+          with urllib.request.urlopen("https://api.github.com/repos/acados/acados/commits/main") as response:
+              data = json.load(response)
+          print(data["sha"])
+          PY
+          )"
           current_ref="$(sed -n 's/^ACADOS_REF=//p' acados.lock | head -n 1)"
           current_sha="$(sed -n 's/^ACADOS_SHA=//p' acados.lock | head -n 1)"
           echo "latest_sha=${latest_sha}" >> "${GITHUB_OUTPUT}"
