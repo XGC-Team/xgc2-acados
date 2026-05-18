@@ -94,6 +94,10 @@ if(CATKIN_ENABLE_TESTING)
       "${ACADOS_VENDOR_INSTALL_PREFIX}/include/blasfeo/include"
       "${ACADOS_VENDOR_INSTALL_PREFIX}/include/hpipm/include"
     )
+    target_compile_definitions(acados_vendor_probe PRIVATE
+      ACADOS_WITH_OSQP
+      ACADOS_WITH_QPOASES
+    )
     target_link_libraries(acados_vendor_probe
       "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libacados.so"
       "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libblasfeo.so"

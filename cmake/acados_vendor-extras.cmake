@@ -25,6 +25,11 @@ set(ACADOS_VENDOR_LIBRARIES
   "${ACADOS_VENDOR_LIBRARY_DIR}/libhpipm.so"
 )
 
+set(ACADOS_VENDOR_COMPILE_DEFINITIONS
+  ACADOS_WITH_OSQP
+  ACADOS_WITH_QPOASES
+)
+
 set(ACADOS_VENDOR_RUNTIME_LIBRARY_DIRS
   "${ACADOS_VENDOR_LIBRARY_DIR}"
 )
@@ -39,5 +44,8 @@ macro(acados_vendor_require)
     if(NOT EXISTS "${_acados_vendor_library}")
       message(STATUS "acados_vendor library will be generated during build: ${_acados_vendor_library}")
     endif()
+  endforeach()
+  foreach(_acados_vendor_definition IN LISTS ACADOS_VENDOR_COMPILE_DEFINITIONS)
+    add_definitions("-D${_acados_vendor_definition}")
   endforeach()
 endmacro()
