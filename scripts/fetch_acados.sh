@@ -50,6 +50,12 @@ check_acados_submodules() {
   test -f interfaces/acados_template/tera_renderer/Cargo.toml
 }
 
+source_is_ready() {
+  git rev-parse --verify HEAD >/dev/null
+  test "$(git rev-parse HEAD)" = "${tag}"
+  check_acados_submodules
+}
+
 update_acados_submodules() {
   local attempt=1
   while true; do
@@ -74,6 +80,11 @@ if [[ ! -d "${source_dir}/.git" ]]; then
 fi
 
 cd "${source_dir}"
+
+if source_is_ready; then
+  echo "acados source already available at ${tag}; skipping fetch."
+  exit 0
+fi
 
 retry "fetch acados refs" git fetch --tags --force origin
 retry "checkout acados ${tag}" git checkout --force "${tag}"

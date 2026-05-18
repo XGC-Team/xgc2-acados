@@ -11,12 +11,13 @@ git submodule add -b noetic git@github.com:lxk36/acados_vendor.git src/optimizer
 ## What This Package Owns
 
 - Pinning the upstream acados source version in `acados.lock`.
-- Fetching acados and recursive upstream dependencies during the catkin build.
+- Fetching acados and recursive upstream dependencies into `third_party/acados`.
 - Building acados into the catkin devel space under `.acados_vendor/install`.
 - Exporting include paths and libraries to downstream catkin packages.
 - CI checks for ROS package compliance and a minimal acados link/runtime probe.
 
 It does not commit acados source, upstream `.git` metadata, or build artifacts into this repository.
+The local acados checkout is kept under `third_party/acados` and ignored by git, so deleting `build/` or `devel/` does not force a full source download.
 
 ## Build
 
@@ -37,6 +38,12 @@ The build output is generated under:
 
 ```text
 devel/.acados_vendor/
+```
+
+The upstream source cache is generated under:
+
+```text
+src/optimizer/acados_vendor/third_party/acados/
 ```
 
 For runtime linking of downstream nodes:
