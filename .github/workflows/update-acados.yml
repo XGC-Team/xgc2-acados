@@ -1,0 +1,66 @@
+name: update-acados
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-update-pr:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: noetic
+
+      - name: Check latest acados release
+        id: latest
+        run: |
+          set -euo pipefail
+          latest="$(python3 - <<'PY'
+import json
+import urllib.request
+
+with urllib.request.urlopen("https://api.github.com/repos/acados/acados/releases/latest") as response:
+    data = json.load(response)
+print(data["tag_name"])
+PY
+)"
+          current="$(sed -n 's/^ACADOS_REF=//p' acados.lock | head -n 1)"
+          echo "latest=${latest}" >> "${GITHUB_OUTPUT}"
+          echo "current=${current}" >> "${GITHUB_OUTPUT}"
+          if [[ "${latest}" != "${current}" ]]; then
+            sed -i "s/^ACADOS_REF=.*/ACADOS_REF=${latest}/" acados.lock
+          fi
+
+      - name: Create pull request
+        id: cpr
+        if: steps.latest.outputs.latest != steps.latest.outputs.current
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: bot/update-acados-${{ steps.latest.outputs.latest }}
+          base: noetic
+          title: "Update acados to ${{ steps.latest.outputs.latest }}"
+          commit-message: "Update acados to ${{ steps.latest.outputs.latest }}"
+          body: |
+            Automated acados vendor update.
+
+            - Previous: `${{ steps.latest.outputs.current }}`
+            - New: `${{ steps.latest.outputs.latest }}`
+
+            This PR must pass package compliance and Noetic build/test before merge.
+
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge "${{ steps.cpr.outputs.pull-request-number }}" \
+            --auto \
+            --squash \
+            --delete-branch

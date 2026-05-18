@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - noetic
+  pull_request:
+    branches:
+      - noetic
+  workflow_dispatch:
+
+jobs:
+  package-compliance:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/lxk36/xgc2-app-store/px4-sitl-gazebo:1.0.3
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Check whitespace
+        run: git -C "${GITHUB_WORKSPACE}" diff --check HEAD
+
+      - name: Package compliance
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}"
+          ./scripts/check_package_compliance.sh
+
+  noetic-build-and-test:
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/lxk36/xgc2-app-store/px4-sitl-gazebo:1.0.3
+    defaults:
+      run:
+        shell: bash
+    env:
+      ACADOS_VENDOR_JOBS: "2"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trust checkout directory
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Prepare workspace
+        run: |
+          set -euo pipefail
+          mkdir -p "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
+          git -C "${GITHUB_WORKSPACE}" archive HEAD | \
+            tar -x -C "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
+
+      - name: Build and run probe tests
+        run: |
+          set -euo pipefail
+          export ROS_MASTER_URI="${ROS_MASTER_URI:-http://localhost:11311}"
+          source /opt/ros/noetic/setup.bash
+          cd "${GITHUB_WORKSPACE}/.ci/ws"
+          catkin_make run_tests_acados_vendor
+          catkin_test_results build/test_results/acados_vendor
+
+      - name: Check runtime libraries
+        run: |
+          set -euo pipefail
+          vendor_lib="${GITHUB_WORKSPACE}/.ci/ws/devel/.acados_vendor/install/lib"
+          test -f "${vendor_lib}/libacados.so"
+          test -f "${vendor_lib}/libblasfeo.so"
+          test -f "${vendor_lib}/libhpipm.so"
+          ldd "${vendor_lib}/libacados.so"

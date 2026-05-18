@@ -1,0 +1,8 @@
+build/
+devel/
+install/
+.catkin_tools/
+.acados_vendor/
+third_party/acados/
+*.pyc
+__pycache__/
