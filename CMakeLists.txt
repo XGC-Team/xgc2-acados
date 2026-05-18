@@ -4,6 +4,12 @@ project(acados_vendor)
 include(ExternalProject)
 include(ProcessorCount)
 
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 find_package(catkin REQUIRED)
 
 set(ACADOS_VENDOR_LOCK_FILE "${CMAKE_CURRENT_SOURCE_DIR}/acados.lock")
@@ -27,6 +33,11 @@ acados_vendor_read_lock("ACADOS_WITH_QPOASES" "ON" ACADOS_WITH_QPOASES)
 acados_vendor_read_lock("ACADOS_WITH_OSQP" "ON" ACADOS_WITH_OSQP)
 acados_vendor_read_lock("BLASFEO_TARGET" "X64_AUTOMATIC" BLASFEO_TARGET)
 acados_vendor_read_lock("HPIPM_TARGET" "GENERIC" HPIPM_TARGET)
+
+option(ACADOS_VENDOR_NATIVE_TESTS
+  "Configure and expose upstream acados C/C++ native tests"
+  OFF
+)
 
 set(ACADOS_VENDOR_PREFIX "${CATKIN_DEVEL_PREFIX}/.acados_vendor")
 set(ACADOS_VENDOR_INSTALL_PREFIX "${ACADOS_VENDOR_PREFIX}/install")
@@ -67,6 +78,7 @@ ExternalProject_Add(acados_vendor_external
     -DACADOS_WITH_PYTHON=OFF
     -DACADOS_WITH_QPOASES=${ACADOS_WITH_QPOASES}
     -DACADOS_WITH_OSQP=${ACADOS_WITH_OSQP}
+    -DACADOS_UNIT_TESTS=${ACADOS_VENDOR_NATIVE_TESTS}
     -DBLASFEO_TARGET=${BLASFEO_TARGET}
     -DHPIPM_TARGET=${HPIPM_TARGET}
   BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target install -- -j${ACADOS_VENDOR_JOBS}
@@ -84,41 +96,22 @@ add_custom_target(acados_vendor_build ALL
   DEPENDS acados_vendor_external
 )
 
+if(ACADOS_VENDOR_NATIVE_TESTS)
+  add_custom_target(acados_vendor_native_tests
+    COMMAND ${CMAKE_COMMAND} --build "${ACADOS_VENDOR_BUILD_DIR}" --target unit_tests -- -j${ACADOS_VENDOR_JOBS}
+    COMMAND ${CMAKE_COMMAND} -E env
+      "LD_LIBRARY_PATH=${ACADOS_VENDOR_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH}"
+      ${CMAKE_COMMAND} -E chdir "${ACADOS_VENDOR_BUILD_DIR}"
+      ${CMAKE_CTEST_COMMAND} --output-on-failure -R "^unit_tests$"
+    DEPENDS acados_vendor_external
+    USES_TERMINAL
+  )
+endif()
+
 catkin_package(
   CFG_EXTRAS acados_vendor-extras.cmake
   EXPORTED_TARGETS acados_vendor_external acados_vendor_build
 )
-
-if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(acados_vendor_probe
-    test/acados_vendor_probe.cpp
-  )
-  if(TARGET acados_vendor_probe)
-    add_dependencies(acados_vendor_probe acados_vendor_external)
-    target_include_directories(acados_vendor_probe PRIVATE
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/include"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/include/blasfeo/include"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/include/hpipm/include"
-    )
-    target_compile_definitions(acados_vendor_probe PRIVATE
-      ACADOS_WITH_OSQP
-      ACADOS_WITH_QPOASES
-    )
-    target_link_libraries(acados_vendor_probe
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libacados.so"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libblasfeo.so"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libhpipm.so"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqpOASES_e.so"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libosqp.so"
-      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqdldl.so"
-      m
-      dl
-    )
-    set_target_properties(acados_vendor_probe PROPERTIES
-      BUILD_RPATH "${ACADOS_VENDOR_INSTALL_PREFIX}/lib"
-    )
-  endif()
-endif()
 
 install(DIRECTORY cmake/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake

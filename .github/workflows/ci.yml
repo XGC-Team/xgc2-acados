@@ -71,7 +71,7 @@ jobs:
             -C "${GITHUB_WORKSPACE}" \
             -cf - . | tar -x -C "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
 
-      - name: Build and run probe tests
+      - name: Build and run native tests
         run: |
           set -euo pipefail
           export ROS_MASTER_URI="${ROS_MASTER_URI:-http://localhost:11311}"
@@ -79,8 +79,7 @@ jobs:
           export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
           source /opt/ros/noetic/setup.bash
           cd "${GITHUB_WORKSPACE}/.ci/ws"
-          catkin_make run_tests_acados_vendor
-          catkin_test_results build/test_results/acados_vendor
+          catkin_make -DACADOS_VENDOR_NATIVE_TESTS=ON acados_vendor_native_tests
 
       - name: Check runtime libraries
         run: |

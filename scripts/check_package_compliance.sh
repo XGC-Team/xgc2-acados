@@ -34,7 +34,6 @@ required_files=(
   CMakeLists.txt
   acados.lock
   cmake/acados_vendor-extras.cmake
-  test/acados_vendor_probe.cpp
 )
 
 for file in "${required_files[@]}"; do

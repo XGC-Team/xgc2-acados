@@ -4,8 +4,8 @@
   <version>0.1.0</version>
   <description>ROS1 Noetic vendor package for the acados solver stack.</description>
 
-  <maintainer email="867768510@qq.com">Lxk_buaa</maintainer>
-  <author email="867768510@qq.com">Lxk_buaa</author>
+  <maintainer email="lxk36@users.noreply.github.com">Lxk_buaa</maintainer>
+  <author email="lxk36@users.noreply.github.com">Lxk_buaa</author>
   <license>BSD-2-Clause</license>
 
   <buildtool_depend>catkin</buildtool_depend>
