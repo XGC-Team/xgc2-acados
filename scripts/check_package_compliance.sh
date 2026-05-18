@@ -8,9 +8,18 @@ cd "${repo_root}"
 xmllint --noout package.xml
 bash -n scripts/*.sh
 
-if find . -mindepth 2 -name .git -print -quit | grep -q .; then
+nested_git="$(
+  find . \
+    -path ./.git -prune -o \
+    -path ./.ci -prune -o \
+    -path ./build -prune -o \
+    -path ./devel -prune -o \
+    -path ./install -prune -o \
+    -name .git -print
+)"
+if [[ -n "${nested_git}" ]]; then
   echo "Nested .git directory found. acados_vendor must not vendor submodules directly." >&2
-  find . -mindepth 2 -name .git -print >&2
+  echo "${nested_git}" >&2
   exit 1
 fi
 

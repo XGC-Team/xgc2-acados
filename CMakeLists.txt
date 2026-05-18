@@ -51,12 +51,15 @@ endif()
 
 ExternalProject_Add(acados_vendor_external
   PREFIX "${ACADOS_VENDOR_PREFIX}"
-  GIT_REPOSITORY "${ACADOS_REPOSITORY}"
-  GIT_TAG "${ACADOS_VENDOR_GIT_TAG}"
-  GIT_SHALLOW OFF
-  GIT_SUBMODULES_RECURSE ON
   SOURCE_DIR "${ACADOS_VENDOR_SOURCE_DIR}"
   BINARY_DIR "${ACADOS_VENDOR_BUILD_DIR}"
+  DOWNLOAD_COMMAND
+    ${CMAKE_COMMAND} -E env
+      ACADOS_VENDOR_GIT_REPOSITORY=${ACADOS_REPOSITORY}
+      ACADOS_VENDOR_GIT_TAG=${ACADOS_VENDOR_GIT_TAG}
+      ACADOS_VENDOR_SOURCE_DIR=${ACADOS_VENDOR_SOURCE_DIR}
+      bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fetch_acados.sh
+  UPDATE_COMMAND ""
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=${ACADOS_VENDOR_INSTALL_PREFIX}
     -DCMAKE_BUILD_TYPE=Release
@@ -72,6 +75,9 @@ ExternalProject_Add(acados_vendor_external
     "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libacados.so"
     "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libblasfeo.so"
     "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libhpipm.so"
+    "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqpOASES_e.so"
+    "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libosqp.so"
+    "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqdldl.so"
 )
 
 add_custom_target(acados_vendor_build ALL
@@ -102,8 +108,14 @@ if(CATKIN_ENABLE_TESTING)
       "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libacados.so"
       "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libblasfeo.so"
       "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libhpipm.so"
+      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqpOASES_e.so"
+      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libosqp.so"
+      "${ACADOS_VENDOR_INSTALL_PREFIX}/lib/libqdldl.so"
       m
       dl
+    )
+    set_target_properties(acados_vendor_probe PROPERTIES
+      BUILD_RPATH "${ACADOS_VENDOR_INSTALL_PREFIX}/lib"
     )
   endif()
 endif()

@@ -13,13 +13,19 @@ jobs:
   package-compliance:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/lxk36/xgc2-app-store/px4-sitl-gazebo:1.0.3
+      image: osrf/ros:noetic-desktop-full
     defaults:
       run:
         shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install CI tools
+        run: |
+          set -euo pipefail
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
 
       - name: Trust checkout directory
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
@@ -36,7 +42,7 @@ jobs:
   noetic-build-and-test:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/lxk36/xgc2-app-store/px4-sitl-gazebo:1.0.3
+      image: osrf/ros:noetic-desktop-full
     defaults:
       run:
         shell: bash
@@ -45,6 +51,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install CI tools
+        run: |
+          set -euo pipefail
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
 
       - name: Trust checkout directory
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
@@ -60,6 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           export ROS_MASTER_URI="${ROS_MASTER_URI:-http://localhost:11311}"
+          vendor_lib="${GITHUB_WORKSPACE}/.ci/ws/devel/.acados_vendor/install/lib"
+          export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
           source /opt/ros/noetic/setup.bash
           cd "${GITHUB_WORKSPACE}/.ci/ws"
           catkin_make run_tests_acados_vendor
@@ -72,4 +86,11 @@ jobs:
           test -f "${vendor_lib}/libacados.so"
           test -f "${vendor_lib}/libblasfeo.so"
           test -f "${vendor_lib}/libhpipm.so"
-          ldd "${vendor_lib}/libacados.so"
+          test -f "${vendor_lib}/libqpOASES_e.so"
+          test -f "${vendor_lib}/libosqp.so"
+          test -f "${vendor_lib}/libqdldl.so"
+          export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
+          ldd "${vendor_lib}/libacados.so" | tee /tmp/acados-ldd.txt
+          if grep -q "not found" /tmp/acados-ldd.txt; then
+            exit 1
+          fi
