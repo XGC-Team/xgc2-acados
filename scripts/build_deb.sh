@@ -45,6 +45,12 @@ bloom-generate rosdebian \
   --os-version "${os_version}" \
   --ros-distro "${ros_distro}"
 
+package_name="ros-${ros_distro}-xgc2-acados"
+private_lib_dir="/opt/ros/${ros_distro}/share/xgc2_acados/acados/lib"
+sed -i \
+  "s|dh_shlibdeps -l\\$(CURDIR)/debian/${package_name}//opt/ros/${ros_distro}/lib/|dh_shlibdeps -l\\$(CURDIR)/debian/${package_name}${private_lib_dir} -l\\$(CURDIR)/debian/${package_name}/opt/ros/${ros_distro}/lib/|" \
+  debian/rules
+
 fakeroot debian/rules binary
 
 find "$(dirname "${source_dir}")" -maxdepth 1 -type f -name "ros-${ros_distro}-xgc2-acados_*.deb" \
