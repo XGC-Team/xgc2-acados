@@ -42,14 +42,16 @@ jobs:
           ./scripts/check_package_compliance.sh
 
   noetic-deb-build-and-smoke:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: amd64
+            runner: ubuntu-22.04
             platform: linux/amd64
           - arch: arm64
+            runner: ubuntu-22.04-arm
             platform: linux/arm64
     defaults:
       run:
@@ -61,10 +63,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        if: matrix.arch != 'amd64'
-        uses: docker/setup-qemu-action@v3
 
       - name: Build deb and run installed smoke test
         run: |
