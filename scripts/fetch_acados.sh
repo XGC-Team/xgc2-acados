@@ -74,9 +74,12 @@ update_acados_submodules() {
 }
 
 if [[ ! -d "${source_dir}/.git" ]]; then
-  rm -rf "${source_dir}"
-  mkdir -p "$(dirname "${source_dir}")"
-  retry "clone acados" git clone "${repo}" "${source_dir}"
+  clone_acados() {
+    rm -rf "${source_dir}"
+    mkdir -p "$(dirname "${source_dir}")"
+    git clone "${repo}" "${source_dir}"
+  }
+  retry "clone acados" clone_acados
 fi
 
 cd "${source_dir}"
