@@ -18,6 +18,11 @@ if ! command -v cargo >/dev/null 2>&1; then
   exit 1
 fi
 
+if command -v rustc >/dev/null 2>&1; then
+  rustc --version
+fi
+cargo --version
+
 cargo build --manifest-path "${renderer_dir}/Cargo.toml" --release
 mkdir -p "$(dirname "${renderer_bin}")"
 cp "${renderer_dir}/target/release/t_renderer" "${renderer_bin}"

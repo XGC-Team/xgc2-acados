@@ -86,6 +86,7 @@ jobs:
                 ca-certificates \
                 cargo \
                 cmake \
+                curl \
                 debhelper \
                 dh-python \
                 dpkg-dev \
@@ -107,6 +108,10 @@ jobs:
               rosdep update
               rosdep install --from-paths . --ignore-src -r -y --rosdistro noetic
               python3 -m pip install --no-cache-dir casadi cython
+              curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+              export PATH="${HOME}/.cargo/bin:${PATH}"
+              rustc --version
+              cargo --version
               ./scripts/check_package_compliance.sh
               ./scripts/build_deb.sh
               apt-get install -y .ci/debs/*.deb
