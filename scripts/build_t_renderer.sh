@@ -3,9 +3,9 @@
 set -euo pipefail
 
 workspace_dir="${ACADOS_VENDOR_WS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.ci/ws}"
-acados_dir="${ACADOS_VENDOR_ACADOS_SOURCE_DIR:-${workspace_dir}/devel/.acados_vendor/src/acados}"
+acados_dir="${ACADOS_VENDOR_ACADOS_SOURCE_DIR:-${workspace_dir}/src/xgc2_acados/third_party/acados}"
 renderer_dir="${acados_dir}/interfaces/acados_template/tera_renderer"
-renderer_bin="${acados_dir}/bin/t_renderer"
+renderer_bin="${ACADOS_VENDOR_T_RENDERER_OUTPUT:-${acados_dir}/bin/t_renderer}"
 
 if [[ ! -f "${renderer_dir}/Cargo.toml" ]]; then
   echo "tera_renderer source not found at ${renderer_dir}" >&2

@@ -13,7 +13,7 @@ jobs:
   package-compliance:
     runs-on: ubuntu-22.04
     container:
-      image: osrf/ros:noetic-desktop-full
+      image: ros:noetic-ros-base-focal
     defaults:
       run:
         shell: bash
@@ -22,7 +22,9 @@ jobs:
         run: |
           set -euo pipefail
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            git \
+            libxml2-utils
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,60 +41,94 @@ jobs:
           cd "${GITHUB_WORKSPACE}"
           ./scripts/check_package_compliance.sh
 
-  noetic-build-and-test:
+  noetic-deb-build-and-smoke:
     runs-on: ubuntu-22.04
-    container:
-      image: osrf/ros:noetic-desktop-full
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: arm64
+            platform: linux/arm64
     defaults:
       run:
         shell: bash
     env:
       ACADOS_VENDOR_JOBS: "2"
+      XGC2_ACADOS_OS_NAME: ubuntu
+      XGC2_ACADOS_OS_VERSION: focal
     steps:
-      - name: Install CI tools
-        run: |
-          set -euo pipefail
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Trust checkout directory
-        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+      - name: Set up QEMU
+        if: matrix.arch != 'amd64'
+        uses: docker/setup-qemu-action@v3
 
-      - name: Prepare workspace
+      - name: Build deb and run installed smoke test
         run: |
           set -euo pipefail
-          mkdir -p "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
-          tar \
-            --exclude=.git \
-            --exclude=.ci \
-            -C "${GITHUB_WORKSPACE}" \
-            -cf - . | tar -x -C "${GITHUB_WORKSPACE}/.ci/ws/src/acados_vendor"
+          docker run --rm \
+            --platform "${{ matrix.platform }}" \
+            -v "${GITHUB_WORKSPACE}:/work" \
+            -w /work \
+            -e ACADOS_VENDOR_JOBS="${ACADOS_VENDOR_JOBS}" \
+            -e XGC2_ACADOS_OS_NAME="${XGC2_ACADOS_OS_NAME}" \
+            -e XGC2_ACADOS_OS_VERSION="${XGC2_ACADOS_OS_VERSION}" \
+            ros:noetic-ros-base-focal \
+            bash -lc '
+              set -euo pipefail
+              apt-get update
+              DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+                apt-utils \
+                build-essential \
+                ca-certificates \
+                cargo \
+                cmake \
+                debhelper \
+                dh-python \
+                dpkg-dev \
+                fakeroot \
+                git \
+                libblas-dev \
+                libxml2-utils \
+                python3-bloom \
+                python3-catkin-pkg-modules \
+                python3-deprecated \
+                python3-empy \
+                python3-matplotlib \
+                python3-numpy \
+                python3-pip \
+                python3-rosdep \
+                python3-rosdep-modules \
+                python3-scipy
+              rosdep init 2>/dev/null || true
+              rosdep update
+              rosdep install --from-paths . --ignore-src -r -y --rosdistro noetic
+              python3 -m pip install --no-cache-dir casadi cython
+              ./scripts/check_package_compliance.sh
+              ./scripts/build_deb.sh
+              apt-get install -y .ci/debs/*.deb
+              ./scripts/smoke_test_installed.sh
+              ./scripts/publish_apt_repo.sh ".ci/apt-${{ matrix.arch }}" .ci/debs focal main
+            '
 
-      - name: Build and run native tests
-        run: |
-          set -euo pipefail
-          export ROS_MASTER_URI="${ROS_MASTER_URI:-http://localhost:11311}"
-          vendor_lib="${GITHUB_WORKSPACE}/.ci/ws/devel/.acados_vendor/install/lib"
-          export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
-          source /opt/ros/noetic/setup.bash
-          cd "${GITHUB_WORKSPACE}/.ci/ws"
-          catkin_make -DACADOS_VENDOR_NATIVE_TESTS=ON acados_vendor_native_tests
+      - name: Upload deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ros-noetic-xgc2-acados-${{ matrix.arch }}
+          path: |
+            .ci/debs/*.deb
+            .ci/apt-${{ matrix.arch }}/
 
-      - name: Check runtime libraries
-        run: |
-          set -euo pipefail
-          vendor_lib="${GITHUB_WORKSPACE}/.ci/ws/devel/.acados_vendor/install/lib"
-          test -f "${vendor_lib}/libacados.so"
-          test -f "${vendor_lib}/libblasfeo.so"
-          test -f "${vendor_lib}/libhpipm.so"
-          test -f "${vendor_lib}/libqpOASES_e.so"
-          test -f "${vendor_lib}/libosqp.so"
-          test -f "${vendor_lib}/libqdldl.so"
-          export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
-          ldd "${vendor_lib}/libacados.so" | tee /tmp/acados-ldd.txt
-          if grep -q "not found" /tmp/acados-ldd.txt; then
-            exit 1
-          fi
+      - name: Publish to self-hosted APT repository
+        if: github.event_name != 'pull_request'
+        env:
+          APT_REPO_HOST: ${{ secrets.APT_REPO_HOST }}
+          APT_REPO_PORT: ${{ secrets.APT_REPO_PORT }}
+          APT_REPO_USER: ${{ secrets.APT_REPO_USER }}
+          APT_REPO_SSH_KEY: ${{ secrets.APT_REPO_SSH_KEY }}
+          APT_REPO_KNOWN_HOSTS: ${{ secrets.APT_REPO_KNOWN_HOSTS }}
+          APT_REPO_DISTRIBUTION: focal
+        run: ./scripts/publish_self_hosted_apt.sh --deb-dir .ci/debs

@@ -1,0 +1,13 @@
+export ACADOS_SOURCE_DIR="@CMAKE_INSTALL_PREFIX@/share/@PROJECT_NAME@/acados"
+export ACADOS_PYTHON_INTERFACE_PATH="${ACADOS_SOURCE_DIR}/interfaces/acados_template/acados_template"
+export TERA_PATH="${ACADOS_SOURCE_DIR}/bin/t_renderer"
+if [ -n "${PYTHONPATH:-}" ]; then
+  export PYTHONPATH="${ACADOS_SOURCE_DIR}/interfaces/acados_template:${PYTHONPATH}"
+else
+  export PYTHONPATH="${ACADOS_SOURCE_DIR}/interfaces/acados_template"
+fi
+if [ -n "${LD_LIBRARY_PATH:-}" ]; then
+  export LD_LIBRARY_PATH="${ACADOS_SOURCE_DIR}/lib:${LD_LIBRARY_PATH}"
+else
+  export LD_LIBRARY_PATH="${ACADOS_SOURCE_DIR}/lib"
+fi

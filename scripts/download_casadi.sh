@@ -3,7 +3,7 @@
 set -euo pipefail
 
 workspace_dir="${ACADOS_VENDOR_WS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.ci/ws}"
-acados_dir="${ACADOS_VENDOR_ACADOS_SOURCE_DIR:-${workspace_dir}/devel/.acados_vendor/src/acados}"
+acados_dir="${ACADOS_VENDOR_ACADOS_SOURCE_DIR:-${workspace_dir}/src/xgc2_acados/third_party/acados}"
 external_dir="${acados_dir}/external"
 casadi_version="${CASADI_VERSION:-3.7.2}"
 casadi_archive="casadi-${casadi_version}-linux64-matlab2018b.zip"

@@ -15,17 +15,18 @@ nested_git="$(
     -path ./build -prune -o \
     -path ./devel -prune -o \
     -path ./install -prune -o \
+    -path ./third_party/acados -prune -o \
     -name .git -print
 )"
 if [[ -n "${nested_git}" ]]; then
-  echo "Nested .git directory found. acados_vendor must not vendor submodules directly." >&2
+  echo "Nested .git directory found. xgc2_acados must not vendor submodules directly." >&2
   echo "${nested_git}" >&2
   exit 1
 fi
 
-if git ls-files | grep -E '(^|/)(build|devel|install|third_party/acados|\.acados_vendor)(/|$)' >/dev/null; then
+if git ls-files | grep -E '(^|/)(build|devel|install|third_party/acados|\.acados_vendor|\.xgc2_acados)(/|$)' >/dev/null; then
   echo "Generated build/vendor artifacts are tracked." >&2
-  git ls-files | grep -E '(^|/)(build|devel|install|third_party/acados|\.acados_vendor)(/|$)' >&2
+  git ls-files | grep -E '(^|/)(build|devel|install|third_party/acados|\.acados_vendor|\.xgc2_acados)(/|$)' >&2
   exit 1
 fi
 
@@ -33,7 +34,9 @@ required_files=(
   package.xml
   CMakeLists.txt
   acados.lock
-  cmake/acados_vendor-extras.cmake
+  cmake/xgc2_acados-extras.cmake
+  env-hooks/99.xgc2_acados.sh.develspace.in
+  env-hooks/99.xgc2_acados.sh.installspace.in
 )
 
 for file in "${required_files[@]}"; do
@@ -48,4 +51,4 @@ if ! grep -q '^ACADOS_REF=' acados.lock; then
   exit 1
 fi
 
-echo "acados_vendor package compliance checks passed."
+echo "xgc2_acados package compliance checks passed."
