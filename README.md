@@ -1,4 +1,4 @@
-# xgc2_acados
+# xgc2-acados
 
 ROS1 Noetic vendor package for the XGC2 acados solver stack. The ROS package
 name is `xgc2_acados`, so bloom/debian packaging produces
@@ -8,7 +8,7 @@ This repository is intentionally separate from the application workspace. The
 application workspace should include it as a git submodule, for example:
 
 ```bash
-git submodule add -b noetic git@github.com:lxk36/acados_vendor.git src/common/acados_vendor
+git submodule add -b noetic git@github.com:lxk36/xgc2-acados.git src/common/acados_vendor
 ```
 
 ## What This Package Owns
@@ -105,6 +105,52 @@ Publish a local apt repository:
 
 ```bash
 ./scripts/publish_apt_repo.sh .ci/apt .ci/debs focal main
+```
+
+## Publish To A Self-Hosted APT Repository
+
+The CI workflow can publish the generated debs to a self-hosted APT repository
+after the package build and installed smoke test pass. Configure these GitHub
+Actions secrets in your own repository:
+
+```text
+APT_REPO_HOST
+APT_REPO_PORT
+APT_REPO_USER
+APT_REPO_SSH_KEY
+APT_REPO_KNOWN_HOSTS
+```
+
+`APT_REPO_SSH_KEY` must be the complete private key, including the
+`-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----`
+lines. `APT_REPO_KNOWN_HOSTS` must be the full `ssh-keyscan` output for the APT
+server publish port, not only the base64 key body.
+
+The workflow does not contain any private APT URL. If the secrets are absent,
+the publish step exits without uploading.
+
+## Install From A Published APT Repository
+
+After your APT server publishes the package, client machines can install it with
+the public key and repository URL from your own server:
+
+```bash
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://YOUR_APT_HOST/xgc2-archive-keyring.gpg | \
+  sudo tee /etc/apt/keyrings/xgc2-archive-keyring.gpg >/dev/null
+
+echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] https://YOUR_APT_HOST focal main" | \
+  sudo tee /etc/apt/sources.list.d/xgc2.list
+
+sudo apt update
+sudo apt install ros-noetic-xgc2-acados
+```
+
+Then source ROS and verify the package:
+
+```bash
+source /opt/ros/noetic/setup.bash
+rospack find xgc2_acados
 ```
 
 ## CI Policy
