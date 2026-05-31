@@ -45,10 +45,15 @@ bloom-generate rosdebian \
   --os-version "${os_version}" \
   --ros-distro "${ros_distro}"
 
-package_name="ros-${ros_distro}-xgc2-acados"
-private_lib_dir="/opt/ros/${ros_distro}/share/xgc2_acados/acados/lib"
+# acados ships a private solver-library graph under the package share
+# directory. dh_shlibdeps is useful for system libraries, but it cannot
+# reliably resolve this bundled private graph across amd64 and arm64.
 sed -i \
-  "/dh_shlibdeps -l/s|dh_shlibdeps .*|dh_shlibdeps -l\\$(CURDIR)/debian/${package_name}${private_lib_dir} -l\\$(CURDIR)/debian/${package_name}/opt/ros/${ros_distro}/lib/|" \
+  '/^override_dh_shlibdeps:/,/^override_dh_auto_install:/c\
+override_dh_shlibdeps:\
+	:\
+\
+override_dh_auto_install:' \
   debian/rules
 
 fakeroot debian/rules binary
