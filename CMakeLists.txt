@@ -75,7 +75,7 @@ ExternalProject_Add(xgc2_acados_external
       ACADOS_VENDOR_GIT_REPOSITORY=${ACADOS_REPOSITORY}
       ACADOS_VENDOR_GIT_TAG=${XGC2_ACADOS_GIT_TAG}
       ACADOS_VENDOR_SOURCE_DIR=${XGC2_ACADOS_SOURCE_DIR}
-      bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fetch_acados.sh
+      bash ${CMAKE_CURRENT_SOURCE_DIR}/.xgc2/scripts/fetch_acados.sh
   UPDATE_COMMAND ""
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=${XGC2_ACADOS_INSTALL_PREFIX}
@@ -103,7 +103,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
     ACADOS_VENDOR_ACADOS_SOURCE_DIR=${XGC2_ACADOS_SOURCE_DIR}
     ACADOS_VENDOR_T_RENDERER_OUTPUT=${XGC2_ACADOS_RENDERER}
-    bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_t_renderer.sh
+    bash ${CMAKE_CURRENT_SOURCE_DIR}/.xgc2/scripts/build_t_renderer.sh
   DEPENDS xgc2_acados_external
   COMMENT "Building acados t_renderer"
   VERBATIM
@@ -211,17 +211,6 @@ install(DIRECTORY "${XGC2_ACADOS_SOURCE_DIR}/interfaces/acados_template/acados_t
 
 install(DIRECTORY cmake/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
-)
-
-install(PROGRAMS
-  scripts/build_acados.sh
-  scripts/build_t_renderer.sh
-  scripts/download_casadi.sh
-  scripts/build_deb.sh
-  scripts/publish_apt_repo.sh
-  scripts/publish_self_hosted_apt.sh
-  scripts/smoke_test_installed.sh
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES README.md acados.lock

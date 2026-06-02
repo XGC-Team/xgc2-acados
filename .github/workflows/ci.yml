@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "${GITHUB_WORKSPACE}"
-          ./scripts/check_package_compliance.sh
+          ./.xgc2/.xgc2/scripts/check_package_compliance.sh
 
   noetic-deb-build-and-smoke:
     runs-on: ${{ matrix.runner }}
@@ -110,11 +110,11 @@ jobs:
               export PATH="${HOME}/.cargo/bin:${PATH}"
               rustc --version
               cargo --version
-              ./scripts/check_package_compliance.sh
-              ./scripts/build_deb.sh
+              ./.xgc2/.xgc2/scripts/check_package_compliance.sh
+              ./.xgc2/.xgc2/scripts/build_deb.sh
               apt-get install -y ./.ci/debs/*.deb
-              ./scripts/smoke_test_installed.sh
-              ./scripts/publish_apt_repo.sh ".ci/apt-${{ matrix.arch }}" .ci/debs focal main
+              ./.xgc2/.xgc2/scripts/smoke_test_installed.sh
+              ./.xgc2/.xgc2/scripts/publish_apt_repo.sh ".ci/apt-${{ matrix.arch }}" .ci/debs focal main
             '
 
       - name: Upload deb artifacts
@@ -134,4 +134,4 @@ jobs:
           APT_REPO_SSH_KEY: ${{ secrets.APT_REPO_SSH_KEY }}
           APT_REPO_KNOWN_HOSTS: ${{ secrets.APT_REPO_KNOWN_HOSTS }}
           APT_REPO_DISTRIBUTION: focal
-        run: ./scripts/publish_self_hosted_apt.sh --deb-dir .ci/debs
+        run: ./.xgc2/.xgc2/scripts/publish_self_hosted_apt.sh --deb-dir .ci/debs

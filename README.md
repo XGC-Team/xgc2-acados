@@ -85,7 +85,7 @@ as compatibility aliases after `find_package(xgc2_acados)`.
 Inside the package repository:
 
 ```bash
-./scripts/build_deb.sh
+./.xgc2/scripts/build_deb.sh
 ```
 
 The deb is written to:
@@ -98,13 +98,13 @@ Install and smoke test it in a Noetic environment:
 
 ```bash
 sudo apt-get install ./.ci/debs/ros-noetic-xgc2-acados_*.deb
-./scripts/smoke_test_installed.sh
+./.xgc2/scripts/smoke_test_installed.sh
 ```
 
 Publish a local apt repository:
 
 ```bash
-./scripts/publish_apt_repo.sh .ci/apt .ci/debs focal main
+./.xgc2/scripts/publish_apt_repo.sh .ci/apt .ci/debs focal main
 ```
 
 ## Publish To A Self-Hosted APT Repository
