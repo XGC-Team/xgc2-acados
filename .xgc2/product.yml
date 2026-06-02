@@ -1,0 +1,28 @@
+schema: xgc2.product.v1
+id: xgc2-acados
+name: XGC2 acados
+kind: toolchain-apt
+summary: ROS Noetic vendor package for the XGC2 acados solver stack.
+
+ros:
+  distro: noetic
+  packages:
+    - xgc2_acados
+
+apt:
+  distribution: focal
+  install:
+    - ros-noetic-xgc2-acados
+  packages:
+    - ros-noetic-xgc2-acados
+
+usage:
+  install: |
+    sudo apt update
+    sudo apt install ros-noetic-xgc2-acados
+  smoke_test: |
+    rospack find xgc2_acados
+
+ownership:
+  paths:
+    - /opt/ros/noetic/share/xgc2_acados
