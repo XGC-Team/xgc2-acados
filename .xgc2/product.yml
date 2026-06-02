@@ -2,10 +2,10 @@ schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
 kind: toolchain-apt
-summary: System-level acados solver stack for XGC2 projects on Ubuntu 20.04 and 24.04.
+summary: System-level acados solver stack for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
 
 apt:
-  distribution: focal,noble
+  distribution: focal,jammy,noble
   install:
     - xgc2-acados
   packages:

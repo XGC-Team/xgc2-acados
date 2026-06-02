@@ -14,7 +14,7 @@ XGC2 packages should depend on this system package instead of `xgc2_acados`.
 - Building and installing `t_renderer`.
 - Installing C/C++ headers, shared libraries, Python templates, MATLAB setup
   helpers, and a CMake package config.
-- Publishing `xgc2-acados` for Ubuntu 20.04 and 24.04 on amd64 and arm64.
+- Publishing `xgc2-acados` for Ubuntu 20.04, 22.04, and 24.04 on amd64 and arm64.
 
 The repository intentionally does not commit upstream acados source, nested
 `.git` directories, or generated build artifacts.

@@ -42,6 +42,14 @@ jobs:
             distribution: focal
           - arch: amd64
             runner: ubuntu-latest
+            image: ubuntu:22.04
+            distribution: jammy
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ubuntu:22.04
+            distribution: jammy
+          - arch: amd64
+            runner: ubuntu-latest
             image: ubuntu:24.04
             distribution: noble
           - arch: arm64
