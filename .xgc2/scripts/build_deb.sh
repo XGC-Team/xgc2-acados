@@ -2,69 +2,139 @@
 
 set -euo pipefail
 
-package_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-build_root="${XGC2_ACADOS_DEB_BUILD_ROOT:-${package_dir}/.ci/debbuild}"
-source_dir="${build_root}/src/xgc2_acados"
-output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${package_dir}/.ci/debs}"
-ros_distro="${ROS_DISTRO:-noetic}"
-os_name="${XGC2_ACADOS_OS_NAME:-ubuntu}"
-os_version="${XGC2_ACADOS_OS_VERSION:-focal}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/../.." && pwd)"
 
-require_tool() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Required tool not found: $1" >&2
-    exit 1
-  fi
-}
+package_name="xgc2-acados"
+version="${PACKAGE_VERSION:-0.1.0-1}"
+prefix="${XGC2_ACADOS_PREFIX:-/opt/xgc2/acados}"
+stage_dir="${XGC2_ACADOS_STAGE_DIR:-${repo_root}/.ci/stage}"
+output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${repo_root}/.ci/debs}"
+pkg_root="${repo_root}/.ci/pkg/${package_name}"
+arch="$(dpkg --print-architecture)"
 
-require_tool bloom-generate
-require_tool fakeroot
+rm -rf "${stage_dir}" "${output_dir}" "${pkg_root}"
+mkdir -p "${output_dir}"
 
-if command -v rosdep >/dev/null 2>&1; then
-  if ! rosdep resolve --rosdistro "${ros_distro}" catkin >/dev/null 2>&1; then
-    rosdep update --rosdistro "${ros_distro}"
-  fi
+"${script_dir}/build_acados.sh"
+
+mkdir -p \
+  "${pkg_root}/DEBIAN" \
+  "${pkg_root}/etc/ld.so.conf.d" \
+  "${pkg_root}/usr/lib/cmake/xgc2_acados" \
+  "${pkg_root}/usr/share/doc/${package_name}"
+
+cp -a "${stage_dir}/opt" "${pkg_root}/"
+
+cat > "${pkg_root}/etc/ld.so.conf.d/xgc2-acados.conf" <<EOF
+${prefix}/lib
+EOF
+
+cat > "${pkg_root}/usr/lib/cmake/xgc2_acados/xgc2_acadosConfig.cmake" <<'CMAKE'
+if(DEFINED _XGC2_ACADOS_CONFIG_INCLUDED)
+  return()
+endif()
+set(_XGC2_ACADOS_CONFIG_INCLUDED TRUE)
+
+set(XGC2_ACADOS_ROOT "/opt/xgc2/acados")
+set(XGC2_ACADOS_SOURCE_DIR "${XGC2_ACADOS_ROOT}")
+set(XGC2_ACADOS_ACADOS_SOURCE_DIR "${XGC2_ACADOS_ROOT}")
+set(XGC2_ACADOS_INSTALL_DIR "${XGC2_ACADOS_ROOT}")
+set(XGC2_ACADOS_INSTALL_PREFIX "${XGC2_ACADOS_ROOT}")
+
+set(XGC2_ACADOS_INCLUDE_DIRS
+  "${XGC2_ACADOS_ROOT}/include"
+  "${XGC2_ACADOS_ROOT}/include/blasfeo/include"
+  "${XGC2_ACADOS_ROOT}/include/hpipm/include")
+
+set(XGC2_ACADOS_LIBRARY_DIR "${XGC2_ACADOS_ROOT}/lib")
+set(XGC2_ACADOS_LIBRARY_DIRS "${XGC2_ACADOS_LIBRARY_DIR}")
+set(XGC2_ACADOS_LIBRARIES
+  "${XGC2_ACADOS_LIBRARY_DIR}/libacados.so"
+  "${XGC2_ACADOS_LIBRARY_DIR}/libblasfeo.so"
+  "${XGC2_ACADOS_LIBRARY_DIR}/libhpipm.so"
+  "${XGC2_ACADOS_LIBRARY_DIR}/libqpOASES_e.so"
+  "${XGC2_ACADOS_LIBRARY_DIR}/libosqp.so"
+  "${XGC2_ACADOS_LIBRARY_DIR}/libqdldl.so")
+
+set(XGC2_ACADOS_T_RENDERER "${XGC2_ACADOS_ROOT}/bin/t_renderer")
+set(XGC2_ACADOS_PYTHON_INTERFACE_PATH
+  "${XGC2_ACADOS_ROOT}/interfaces/acados_template/acados_template")
+get_filename_component(XGC2_ACADOS_PYTHONPATH
+  "${XGC2_ACADOS_PYTHON_INTERFACE_PATH}" DIRECTORY)
+set(XGC2_ACADOS_PYTHON_PATH "${XGC2_ACADOS_PYTHONPATH}")
+set(XGC2_ACADOS_RUNTIME_LIBRARY_DIRS "${XGC2_ACADOS_LIBRARY_DIR}")
+set(XGC2_ACADOS_COMPILE_DEFINITIONS ACADOS_WITH_OSQP ACADOS_WITH_QPOASES)
+
+macro(xgc2_acados_require)
+  foreach(_xgc2_acados_include IN LISTS XGC2_ACADOS_INCLUDE_DIRS)
+    if(NOT EXISTS "${_xgc2_acados_include}")
+      message(FATAL_ERROR "xgc2-acados include path is missing: ${_xgc2_acados_include}")
+    endif()
+  endforeach()
+  foreach(_xgc2_acados_library IN LISTS XGC2_ACADOS_LIBRARIES)
+    if(NOT EXISTS "${_xgc2_acados_library}")
+      message(FATAL_ERROR "xgc2-acados library is missing: ${_xgc2_acados_library}")
+    endif()
+  endforeach()
+  foreach(_xgc2_acados_definition IN LISTS XGC2_ACADOS_COMPILE_DEFINITIONS)
+    add_definitions("-D${_xgc2_acados_definition}")
+  endforeach()
+endmacro()
+
+set(ACADOS_VENDOR_INSTALL_DIR "${XGC2_ACADOS_ROOT}")
+set(ACADOS_VENDOR_SOURCE_DIR "${XGC2_ACADOS_ROOT}")
+set(ACADOS_VENDOR_INCLUDE_DIRS "${XGC2_ACADOS_INCLUDE_DIRS}")
+set(ACADOS_VENDOR_LIBRARY_DIR "${XGC2_ACADOS_LIBRARY_DIR}")
+set(ACADOS_VENDOR_LIBRARY_DIRS "${XGC2_ACADOS_LIBRARY_DIRS}")
+set(ACADOS_VENDOR_LIBRARIES "${XGC2_ACADOS_LIBRARIES}")
+set(ACADOS_VENDOR_PYTHON_INTERFACE_PATH "${XGC2_ACADOS_PYTHON_INTERFACE_PATH}")
+set(ACADOS_VENDOR_PYTHONPATH "${XGC2_ACADOS_PYTHONPATH}")
+set(ACADOS_VENDOR_COMPILE_DEFINITIONS "${XGC2_ACADOS_COMPILE_DEFINITIONS}")
+set(ACADOS_VENDOR_RUNTIME_LIBRARY_DIRS "${XGC2_ACADOS_RUNTIME_LIBRARY_DIRS}")
+macro(acados_vendor_require)
+  xgc2_acados_require()
+endmacro()
+CMAKE
+
+cat > "${pkg_root}/DEBIAN/control" <<EOF
+Package: ${package_name}
+Version: ${version}
+Section: devel
+Priority: optional
+Architecture: ${arch}
+Maintainer: XGC2 <apt@example.com>
+Depends: libc6, libgcc-s1, libgomp1, libstdc++6, libblas-dev, python3, python3-deprecated, python3-matplotlib, python3-numpy, python3-pip, python3-scipy
+Conflicts: ros-noetic-xgc2-acados
+Replaces: ros-noetic-xgc2-acados
+Description: XGC2 packaged acados solver stack
+ System-level acados headers, shared libraries, t_renderer, Python templates,
+ MATLAB setup helper, and CMake package configuration for XGC2 projects.
+EOF
+
+cat > "${pkg_root}/DEBIAN/postinst" <<'SH'
+#!/bin/sh
+set -e
+if command -v ldconfig >/dev/null 2>&1; then
+  ldconfig
 fi
-
-rm -rf "${build_root}" "${output_dir}"
-mkdir -p "${source_dir}" "${output_dir}"
-
-tar \
-  --exclude=.git \
-  --exclude=.ci \
-  --exclude=build \
-  --exclude=devel \
-  --exclude=install \
-  --exclude=third_party/acados \
-  -C "${package_dir}" \
-  -cf - . | tar -x -C "${source_dir}"
-
-cd "${source_dir}"
-bloom-generate rosdebian \
-  --os-name "${os_name}" \
-  --os-version "${os_version}" \
-  --ros-distro "${ros_distro}"
-
-# acados ships a private solver-library graph under the package share
-# directory. dh_shlibdeps is useful for system libraries, but it cannot
-# reliably resolve this bundled private graph across amd64 and arm64.
-sed -i \
-  '/^override_dh_shlibdeps:/,/^override_dh_auto_install:/c\
-override_dh_shlibdeps:\
-	:\
-\
-override_dh_auto_install:' \
-  debian/rules
-
-fakeroot debian/rules binary
-
-find "$(dirname "${source_dir}")" -maxdepth 1 -type f -name "ros-${ros_distro}-xgc2-acados_*.deb" \
-  -exec cp -v {} "${output_dir}/" \;
-
-if ! find "${output_dir}" -maxdepth 1 -type f -name "ros-${ros_distro}-xgc2-acados_*.deb" | grep -q .; then
-  echo "No ros-${ros_distro}-xgc2-acados deb was produced." >&2
-  exit 1
+SH
+cat > "${pkg_root}/DEBIAN/postrm" <<'SH'
+#!/bin/sh
+set -e
+if command -v ldconfig >/dev/null 2>&1; then
+  ldconfig
 fi
+SH
+chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
 
-dpkg-deb -I "${output_dir}"/ros-"${ros_distro}"-xgc2-acados_*.deb
+cp -a "${repo_root}/README.md" "${repo_root}/acados.lock" "${pkg_root}/usr/share/doc/${package_name}/"
+
+find "${pkg_root}" -type d -exec chmod 0755 {} +
+find "${pkg_root}" -type f -exec chmod 0644 {} +
+chmod 0755 "${pkg_root}/DEBIAN" "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
+chmod 0755 "${pkg_root}${prefix}/setup.bash" "${pkg_root}${prefix}/bin/t_renderer"
+
+fakeroot dpkg-deb --build "${pkg_root}" "${output_dir}/${package_name}_${version}_${arch}.deb" >/dev/null
+dpkg-deb -I "${output_dir}/${package_name}_${version}_${arch}.deb"
 echo "Debian artifacts written to ${output_dir}"

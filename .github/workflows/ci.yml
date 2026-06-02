@@ -3,63 +3,56 @@ name: ci
 on:
   push:
     branches:
-      - noetic
+      - master
   pull_request:
     branches:
-      - noetic
+      - master
   workflow_dispatch:
 
 jobs:
   package-compliance:
-    runs-on: ubuntu-22.04
-    container:
-      image: ros:noetic-ros-base-focal
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
     steps:
-      - name: Install CI tools
-        run: |
-          set -euo pipefail
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            git \
-            libxml2-utils
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Trust checkout directory
-        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
       - name: Check whitespace
-        run: git -C "${GITHUB_WORKSPACE}" diff --check HEAD
+        run: git diff --check HEAD
 
       - name: Package compliance
-        run: |
-          set -euo pipefail
-          cd "${GITHUB_WORKSPACE}"
-          ./.xgc2/scripts/check_package_compliance.sh
+        run: ./.xgc2/scripts/check_package_compliance.sh
 
-  noetic-deb-build-and-smoke:
+  deb-build-and-smoke:
+    needs: package-compliance
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: amd64
-            runner: ubuntu-22.04
-            platform: linux/amd64
+            runner: ubuntu-latest
+            image: ubuntu:20.04
+            distribution: focal
           - arch: arm64
-            runner: ubuntu-22.04-arm
-            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            image: ubuntu:20.04
+            distribution: focal
+          - arch: amd64
+            runner: ubuntu-latest
+            image: ubuntu:24.04
+            distribution: noble
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ubuntu:24.04
+            distribution: noble
     defaults:
       run:
         shell: bash
     env:
       ACADOS_VENDOR_JOBS: "2"
-      XGC2_ACADOS_OS_NAME: ubuntu
-      XGC2_ACADOS_OS_VERSION: focal
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,62 +61,48 @@ jobs:
         run: |
           set -euo pipefail
           docker run --rm \
-            --platform "${{ matrix.platform }}" \
             -v "${GITHUB_WORKSPACE}:/work" \
             -w /work \
             -e ACADOS_VENDOR_JOBS="${ACADOS_VENDOR_JOBS}" \
-            -e XGC2_ACADOS_OS_NAME="${XGC2_ACADOS_OS_NAME}" \
-            -e XGC2_ACADOS_OS_VERSION="${XGC2_ACADOS_OS_VERSION}" \
-            ros:noetic-ros-base-focal \
+            "${{ matrix.image }}" \
             bash -lc '
               set -euo pipefail
+              export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-                apt-utils \
+              apt-get install -y --no-install-recommends \
                 build-essential \
                 ca-certificates \
-                cargo \
                 cmake \
                 curl \
-                debhelper \
-                dh-python \
                 dpkg-dev \
                 fakeroot \
+                file \
                 git \
                 libblas-dev \
-                libxml2-utils \
-                python3-bloom \
-                python3-catkin-pkg-modules \
+                python3 \
                 python3-deprecated \
-                python3-empy \
                 python3-matplotlib \
                 python3-numpy \
                 python3-pip \
-                python3-rosdep \
-                python3-rosdep-modules \
                 python3-scipy
-              rosdep init 2>/dev/null || true
-              rosdep update
-              rosdep install --from-paths . --ignore-src -r -y --rosdistro noetic
-              python3 -m pip install --no-cache-dir casadi cython
-              curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+              python3 -m pip install --no-cache-dir casadi cython || \
+                python3 -m pip install --break-system-packages --no-cache-dir casadi cython
+              curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | \
+                sh -s -- -y --profile minimal --default-toolchain stable
               export PATH="${HOME}/.cargo/bin:${PATH}"
               rustc --version
               cargo --version
               ./.xgc2/scripts/check_package_compliance.sh
               ./.xgc2/scripts/build_deb.sh
-              apt-get install -y ./.ci/debs/*.deb
+              apt-get install -y ./.ci/debs/xgc2-acados_*.deb
               ./.xgc2/scripts/smoke_test_installed.sh
-              ./.xgc2/scripts/publish_apt_repo.sh ".ci/apt-${{ matrix.arch }}" .ci/debs focal main
             '
 
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ros-noetic-xgc2-acados-${{ matrix.arch }}
-          path: |
-            .ci/debs/*.deb
-            .ci/apt-${{ matrix.arch }}/
+          name: xgc2-acados-${{ matrix.distribution }}-${{ matrix.arch }}
+          path: .ci/debs/*.deb
 
       - name: Publish to self-hosted APT repository
         if: github.event_name != 'pull_request'
@@ -133,5 +112,5 @@ jobs:
           APT_REPO_USER: ${{ secrets.APT_REPO_USER }}
           APT_REPO_SSH_KEY: ${{ secrets.APT_REPO_SSH_KEY }}
           APT_REPO_KNOWN_HOSTS: ${{ secrets.APT_REPO_KNOWN_HOSTS }}
-          APT_REPO_DISTRIBUTION: focal
+          APT_REPO_DISTRIBUTION: ${{ matrix.distribution }}
         run: ./.xgc2/scripts/publish_self_hosted_apt.sh --deb-dir .ci/debs

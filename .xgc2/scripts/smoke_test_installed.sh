@@ -2,16 +2,10 @@
 
 set -euo pipefail
 
-setup_file="${XGC2_ACADOS_SETUP:-/opt/ros/noetic/setup.bash}"
-set +u
-source "${setup_file}"
-set -u
-
-pkg_dir="$(rospack find xgc2_acados)"
-acados_root="${ACADOS_SOURCE_DIR:-${pkg_dir}/acados}"
+acados_root="${XGC2_ACADOS_ROOT:-/opt/xgc2/acados}"
 vendor_lib="${acados_root}/lib"
 
-test -d "${pkg_dir}"
+test -d "${acados_root}"
 test -d "${acados_root}/include/acados"
 test -d "${acados_root}/interfaces/acados_template/acados_template/c_templates_tera"
 test -x "${acados_root}/bin/t_renderer"
@@ -20,12 +14,11 @@ test -f "${vendor_lib}/libblasfeo.so"
 test -f "${vendor_lib}/libhpipm.so"
 test -f "${vendor_lib}/link_libs.json"
 test -f "${vendor_lib}/git_commit_hash"
+test -f /usr/lib/cmake/xgc2_acados/xgc2_acadosConfig.cmake
 
-export ACADOS_SOURCE_DIR="${acados_root}"
-export ACADOS_PYTHON_INTERFACE_PATH="${acados_root}/interfaces/acados_template/acados_template"
-export TERA_PATH="${acados_root}/bin/t_renderer"
-export PYTHONPATH="${acados_root}/interfaces/acados_template:${PYTHONPATH:-}"
-export LD_LIBRARY_PATH="${vendor_lib}:${LD_LIBRARY_PATH:-}"
+set +u
+source "${acados_root}/setup.bash"
+set -u
 
 ldd "${vendor_lib}/libacados.so" | tee /tmp/xgc2-acados-libacados-ldd.txt
 if grep -q "not found" /tmp/xgc2-acados-libacados-ldd.txt; then
@@ -35,7 +28,6 @@ fi
 python3 - "$acados_root" <<'PY'
 import casadi as ca
 import json
-import os
 import pathlib
 import sys
 import tempfile
@@ -101,48 +93,38 @@ with tempfile.TemporaryDirectory(prefix="xgc2-acados-codegen-") as tmp:
     assert (tmp_path / "c_generated_code" / "acados_solver_xgc2_probe.c").is_file()
 PY
 
-probe_ws="${XGC2_ACADOS_SMOKE_WS:-$(mktemp -d -t xgc2-acados-ws-XXXXXX)}"
-mkdir -p "${probe_ws}/src/xgc2_acados_link_probe/src"
+probe_ws="${XGC2_ACADOS_SMOKE_WS:-$(mktemp -d -t xgc2-acados-cmake-XXXXXX)}"
+mkdir -p "${probe_ws}/src"
 
-cat > "${probe_ws}/src/xgc2_acados_link_probe/package.xml" <<'XML'
-<?xml version="1.0"?>
-<package format="2">
-  <name>xgc2_acados_link_probe</name>
-  <version>0.0.0</version>
-  <description>xgc2_acados installed package link probe.</description>
-  <maintainer email="noreply@example.com">CI</maintainer>
-  <license>BSD-2-Clause</license>
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>xgc2_acados</depend>
-</package>
-XML
+cat > "${probe_ws}/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.16)
+project(xgc2_acados_link_probe C)
 
-cat > "${probe_ws}/src/xgc2_acados_link_probe/CMakeLists.txt" <<'CMAKE'
-cmake_minimum_required(VERSION 3.0.2)
-project(xgc2_acados_link_probe)
-
-find_package(catkin REQUIRED COMPONENTS xgc2_acados)
-catkin_package()
-
-add_executable(link_probe src/link_probe.cpp)
+find_package(xgc2_acados REQUIRED CONFIG)
 xgc2_acados_require()
+
+add_executable(link_probe src/link_probe.c)
 target_include_directories(link_probe PRIVATE ${XGC2_ACADOS_INCLUDE_DIRS})
-target_link_libraries(link_probe ${XGC2_ACADOS_LIBRARIES})
+target_link_libraries(link_probe PRIVATE ${XGC2_ACADOS_LIBRARIES})
 CMAKE
 
-cat > "${probe_ws}/src/xgc2_acados_link_probe/src/link_probe.cpp" <<'CPP'
-#include <cstddef>
+cat > "${probe_ws}/src/link_probe.c" <<'C'
+#include <stddef.h>
 #include "acados/utils/mem.h"
 
-int main()
+int main(void)
 {
   void *(*probe)(size_t, acados_size_t) = acados_malloc;
-  return probe == nullptr;
+  return probe == 0;
 }
-CPP
+C
 
-cd "${probe_ws}"
-catkin_make
-"${probe_ws}/devel/lib/xgc2_acados_link_probe/link_probe"
+cmake -S "${probe_ws}" -B "${probe_ws}/build"
+cmake --build "${probe_ws}/build"
+"${probe_ws}/build/link_probe"
 
-echo "xgc2_acados installed smoke test passed."
+if command -v matlab >/dev/null 2>&1; then
+  matlab -batch "run('${acados_root}/setup_acados.m'); assert(~isempty(getenv('ACADOS_SOURCE_DIR')));"
+fi
+
+echo "xgc2-acados installed smoke test passed."

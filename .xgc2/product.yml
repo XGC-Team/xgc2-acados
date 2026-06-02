@@ -2,27 +2,32 @@ schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
 kind: toolchain-apt
-summary: ROS Noetic vendor package for the XGC2 acados solver stack.
-
-ros:
-  distro: noetic
-  packages:
-    - xgc2_acados
+summary: System-level acados solver stack for XGC2 projects on Ubuntu 20.04 and 24.04.
 
 apt:
-  distribution: focal
+  distribution: focal,noble
   install:
-    - ros-noetic-xgc2-acados
+    - xgc2-acados
   packages:
-    - ros-noetic-xgc2-acados
+    - xgc2-acados
 
 usage:
   install: |
     sudo apt update
-    sudo apt install ros-noetic-xgc2-acados
+    sudo apt install xgc2-acados
   smoke_test: |
-    rospack find xgc2_acados
+    source /opt/xgc2/acados/setup.bash
+    python3 -c 'from acados_template import AcadosOcp'
+  notes: |
+    CMake consumers should use find_package(xgc2_acados REQUIRED CONFIG).
+    MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
 ownership:
   paths:
-    - /opt/ros/noetic/share/xgc2_acados
+    - /opt/xgc2/acados
+    - /usr/lib/cmake/xgc2_acados
+    - /etc/ld.so.conf.d/xgc2-acados.conf
+
+conflicts:
+  apt_packages:
+    - ros-noetic-xgc2-acados
