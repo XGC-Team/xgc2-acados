@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${repo_root}"
 
 xmllint --noout package.xml
-bash -n scripts/*.sh
+bash -n .xgc2/scripts/*.sh
 
 nested_git="$(
   find . \

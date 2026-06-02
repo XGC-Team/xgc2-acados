@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-package_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+package_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 workspace_dir="${ACADOS_VENDOR_WS:-${package_dir}/.ci/ws}"
 
 rm -rf "${workspace_dir}/src/xgc2_acados"

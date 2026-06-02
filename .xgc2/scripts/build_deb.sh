@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-package_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+package_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 build_root="${XGC2_ACADOS_DEB_BUILD_ROOT:-${package_dir}/.ci/debbuild}"
 source_dir="${build_root}/src/xgc2_acados"
 output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${package_dir}/.ci/debs}"

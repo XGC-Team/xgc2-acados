@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-workspace_dir="${ACADOS_VENDOR_WS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.ci/ws}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+package_dir="$(cd "${script_dir}/../.." && pwd)"
+workspace_dir="${ACADOS_VENDOR_WS:-${package_dir}/.ci/ws}"
 acados_dir="${ACADOS_VENDOR_ACADOS_SOURCE_DIR:-${workspace_dir}/src/xgc2_acados/third_party/acados}"
 external_dir="${acados_dir}/external"
 casadi_version="${CASADI_VERSION:-3.7.2}"
