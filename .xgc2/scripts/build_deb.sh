@@ -134,6 +134,8 @@ find "${pkg_root}" -type d -exec chmod 0755 {} +
 find "${pkg_root}" -type f -exec chmod 0644 {} +
 chmod 0755 "${pkg_root}/DEBIAN" "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
 chmod 0755 "${pkg_root}${prefix}/setup.bash" "${pkg_root}${prefix}/bin/t_renderer"
+find "${pkg_root}${prefix}" -type f \( -name '*.so' -o -name '*.so.*' -o -perm -0100 \) \
+  -exec strip --strip-unneeded {} + 2>/dev/null || true
 
 fakeroot dpkg-deb --build "${pkg_root}" "${output_dir}/${package_name}_${version}_${arch}.deb" >/dev/null
 dpkg-deb -I "${output_dir}/${package_name}_${version}_${arch}.deb"
