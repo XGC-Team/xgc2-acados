@@ -72,6 +72,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/work" \
             -w /work \
             -e ACADOS_VENDOR_JOBS="${ACADOS_VENDOR_JOBS}" \
+            -e PACKAGE_DISTRIBUTION="${{ matrix.distribution }}" \
             "${{ matrix.image }}" \
             bash -lc '
               set -euo pipefail
