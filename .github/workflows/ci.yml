@@ -122,8 +122,6 @@ jobs:
                 python3-numpy \
                 python3-pip \
                 python3-scipy
-              python3 -m pip install --no-cache-dir casadi cython || \
-                python3 -m pip install --break-system-packages --no-cache-dir casadi cython
               curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | \
                 sh -s -- -y --profile minimal --default-toolchain stable
               export PATH="${HOME}/.cargo/bin:${PATH}"

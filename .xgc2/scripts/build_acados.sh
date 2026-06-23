@@ -91,6 +91,10 @@ case ":${PYTHONPATH:-}:" in
   *":${ACADOS_SOURCE_DIR}/interfaces/acados_template:"*) ;;
   *) export PYTHONPATH="${ACADOS_SOURCE_DIR}/interfaces/acados_template${PYTHONPATH:+:${PYTHONPATH}}" ;;
 esac
+case ":${PYTHONPATH:-}:" in
+  *":${ACADOS_SOURCE_DIR}/python:"*) ;;
+  *) export PYTHONPATH="${ACADOS_SOURCE_DIR}/python${PYTHONPATH:+:${PYTHONPATH}}" ;;
+esac
 case ":${LD_LIBRARY_PATH:-}:" in
   *":${ACADOS_SOURCE_DIR}/lib:"*) ;;
   *) export LD_LIBRARY_PATH="${ACADOS_SOURCE_DIR}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ;;

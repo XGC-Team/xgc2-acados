@@ -42,6 +42,8 @@ from acados_template.utils import (
 )
 
 acados_root = pathlib.Path(sys.argv[1]).resolve()
+casadi_path = pathlib.Path(ca.__file__).resolve()
+assert acados_root / "python" in casadi_path.parents, casadi_path
 assert pathlib.Path(get_acados_path()).resolve() == acados_root
 assert pathlib.Path(get_python_interface_path()).is_dir()
 assert pathlib.Path(get_tera_exec_path()).is_file()

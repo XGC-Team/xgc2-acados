@@ -6,8 +6,13 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 
 package_name="xgc2-acados"
-package_base_version="${PACKAGE_BASE_VERSION:-0.1.0-2}"
+product_version() {
+  awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' "${repo_root}/.xgc2/product.yml"
+}
+
+package_base_version="${PACKAGE_BASE_VERSION:-$(product_version)}"
 package_distribution="${PACKAGE_DISTRIBUTION:-${APT_REPO_DISTRIBUTION:-}}"
+casadi_version="${CASADI_VERSION:-3.7.2}"
 prefix="${XGC2_ACADOS_PREFIX:-/opt/xgc2/acados}"
 stage_dir="${XGC2_ACADOS_STAGE_DIR:-${repo_root}/.ci/stage}"
 output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${repo_root}/.ci/debs}"
@@ -45,6 +50,20 @@ rm -rf "${stage_dir}" "${output_dir}" "${pkg_root}"
 mkdir -p "${output_dir}"
 
 "${script_dir}/build_acados.sh"
+
+python_vendor_dir="${stage_dir}${prefix}/python"
+rm -rf "${python_vendor_dir}"
+mkdir -p "${python_vendor_dir}"
+python3 -m pip install \
+  --no-cache-dir \
+  --no-deps \
+  --target "${python_vendor_dir}" \
+  "casadi==${casadi_version}"
+
+PYTHONPATH="${python_vendor_dir}" python3 - <<'PY'
+import casadi
+print(casadi.__file__)
+PY
 
 mkdir -p \
   "${pkg_root}/DEBIAN" \
@@ -86,10 +105,14 @@ set(XGC2_ACADOS_LIBRARIES
   "${XGC2_ACADOS_LIBRARY_DIR}/libqdldl.so")
 
 set(XGC2_ACADOS_T_RENDERER "${XGC2_ACADOS_ROOT}/bin/t_renderer")
+set(XGC2_ACADOS_PYTHON_VENDOR_PATH "${XGC2_ACADOS_ROOT}/python")
 set(XGC2_ACADOS_PYTHON_INTERFACE_PATH
   "${XGC2_ACADOS_ROOT}/interfaces/acados_template/acados_template")
 get_filename_component(XGC2_ACADOS_PYTHONPATH
   "${XGC2_ACADOS_PYTHON_INTERFACE_PATH}" DIRECTORY)
+set(XGC2_ACADOS_PYTHONPATH
+  "${XGC2_ACADOS_PYTHON_VENDOR_PATH}"
+  "${XGC2_ACADOS_PYTHONPATH}")
 set(XGC2_ACADOS_PYTHON_PATH "${XGC2_ACADOS_PYTHONPATH}")
 set(XGC2_ACADOS_RUNTIME_LIBRARY_DIRS "${XGC2_ACADOS_LIBRARY_DIR}")
 set(XGC2_ACADOS_COMPILE_DEFINITIONS ACADOS_WITH_OSQP ACADOS_WITH_QPOASES)
@@ -132,12 +155,13 @@ Section: devel
 Priority: optional
 Architecture: ${arch}
 Maintainer: XGC2 <apt@example.com>
-Depends: libc6, libgcc-s1, libgomp1, libstdc++6, libblas-dev, python3, python3-deprecated, python3-matplotlib, python3-numpy, python3-pip, python3-scipy
+Depends: libc6, libgcc-s1, libgomp1, libstdc++6, libblas-dev, python3, python3-deprecated, python3-matplotlib, python3-numpy, python3-scipy
 Conflicts: ros-noetic-xgc2-acados
 Replaces: ros-noetic-xgc2-acados
 Description: XGC2 packaged acados solver stack
  System-level acados headers, shared libraries, t_renderer, Python templates,
- MATLAB setup helper, and CMake package configuration for XGC2 projects.
+ vendored CasADi Python module, MATLAB setup helper, and CMake package
+ configuration for XGC2 projects.
 EOF
 
 cat > "${pkg_root}/DEBIAN/postinst" <<'SH'

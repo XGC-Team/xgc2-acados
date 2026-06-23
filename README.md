@@ -13,7 +13,7 @@ XGC2 packages should depend on this system package instead of `xgc2_acados`.
 - Building acados shared libraries.
 - Building and installing `t_renderer`.
 - Installing C/C++ headers, shared libraries, Python templates, MATLAB setup
-  helpers, and a CMake package config.
+  helpers, a pinned CasADi Python module, and a CMake package config.
 - Publishing `xgc2-acados` for Ubuntu 20.04, 22.04, and 24.04 on amd64 and arm64.
 
 The repository intentionally does not commit upstream acados source, nested
@@ -35,6 +35,7 @@ Installed layout:
   interfaces/acados_template/
   interfaces/acados_matlab_octave/   # when provided by upstream acados
   lib/libacados.so
+  python/casadi/
   setup.bash
   setup_acados.m
 /usr/lib/cmake/xgc2_acados/xgc2_acadosConfig.cmake
@@ -71,8 +72,9 @@ python3 -c 'from acados_template import AcadosOcp, AcadosOcpSolver'
 ```
 
 The package provides acados' Python template code and path setup. Python solver
-generation still requires normal Python dependencies such as CasADi to be
-available in the active Python environment.
+generation uses the CasADi Python module vendored inside the `xgc2-acados`
+Debian package, so downstream packages do not need to install CasADi through
+pip.
 
 ## MATLAB Usage
 
@@ -88,7 +90,6 @@ interface directories to the MATLAB path when upstream acados provides them.
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential cmake curl fakeroot git libblas-dev python3 python3-pip
-python3 -m pip install casadi cython
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
 export PATH="$HOME/.cargo/bin:$PATH"
 ./.xgc2/scripts/build_deb.sh

@@ -1,8 +1,9 @@
 schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
+version: 0.1.0-3
 kind: toolchain-apt
-summary: System-level acados solver stack for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
+summary: System-level acados solver stack and Python code-generation dependencies for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
 
 apt:
   distribution: focal,jammy,noble
@@ -20,7 +21,6 @@ apt:
     - python3-deprecated
     - python3-matplotlib
     - python3-numpy
-    - python3-pip
     - python3-scipy
 
 usage:

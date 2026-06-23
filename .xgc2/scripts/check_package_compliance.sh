@@ -43,6 +43,9 @@ for file in "${required_files[@]}"; do
   fi
 done
 
+grep -q '^version: 0.1.0-3$' .xgc2/product.yml
+grep -q 'package_base_version="${PACKAGE_BASE_VERSION:-$(product_version)}"' .xgc2/scripts/build_deb.sh
+
 if ! grep -q '^ACADOS_REF=' acados.lock; then
   echo "acados.lock must pin ACADOS_REF." >&2
   exit 1
