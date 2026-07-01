@@ -1,16 +1,58 @@
-name: ci
+name: release
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
   workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Expected .xgc2/product.yml version
+        required: true
+        type: string
+      expected_source_sha:
+        description: Expected source commit SHA
+        required: true
+        type: string
+      publish_apt:
+        description: Publish debs to the APT repository
+        required: true
+        type: boolean
+        default: false
+      run_cpp_quality:
+        description: Run C++ quality checks
+        required: true
+        type: boolean
+        default: false
+      run_source_tests:
+        description: Run source tests
+        required: true
+        type: boolean
+        default: true
 
 jobs:
+  release-guard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release inputs
+        run: |
+          set -euo pipefail
+          product_version="$(awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' .xgc2/product.yml)"
+          if [[ "${product_version}" != "${{ inputs.expected_version }}" ]]; then
+            echo "product.yml version ${product_version} != expected_version ${{ inputs.expected_version }}" >&2
+            exit 1
+          fi
+          source_sha="$(git rev-parse HEAD)"
+          if [[ "${source_sha}" != "${{ inputs.expected_source_sha }}" ]]; then
+            echo "HEAD ${source_sha} != expected_source_sha ${{ inputs.expected_source_sha }}" >&2
+            exit 1
+          fi
+
   package-compliance:
+    needs: release-guard
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,8 +67,20 @@ jobs:
       - name: Package compliance
         run: ./.xgc2/scripts/check_package_compliance.sh
 
+  cpp-quality:
+    if: ${{ inputs.run_cpp_quality }}
+    needs: release-guard
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: No C++ quality gate configured
+        run: echo "No standalone C++ quality gate is configured for xgc2-acados."
+
   acados-native-c-tests:
-    needs: package-compliance
+    if: ${{ inputs.run_source_tests }}
+    needs: release-guard
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -138,3 +192,14 @@ jobs:
         with:
           name: xgc2-acados-${{ matrix.distribution }}-${{ matrix.arch }}
           path: .ci/debs/*.deb
+
+      - name: Publish to self-hosted APT repository
+        if: ${{ inputs.publish_apt }}
+        env:
+          APT_REPO_HOST: ${{ secrets.APT_REPO_HOST }}
+          APT_REPO_PORT: ${{ secrets.APT_REPO_PORT }}
+          APT_REPO_USER: ${{ secrets.APT_REPO_USER }}
+          APT_REPO_SSH_KEY: ${{ secrets.APT_REPO_SSH_KEY }}
+          APT_REPO_KNOWN_HOSTS: ${{ secrets.APT_REPO_KNOWN_HOSTS }}
+          APT_REPO_DISTRIBUTION: ${{ matrix.distribution }}
+        run: ./.xgc2/scripts/publish_self_hosted_apt.sh --deb-dir .ci/debs
