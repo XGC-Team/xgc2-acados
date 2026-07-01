@@ -1,51 +1,53 @@
 schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
-version: 0.1.0-3
+version: 0.1.0-4
 kind: toolchain-apt
-summary: System-level acados solver stack and Python code-generation dependencies for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
-
+summary: System-level acados solver stack and Python code-generation dependencies
+  for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
 apt:
   distribution: focal,jammy,noble
   install:
-    - xgc2-acados
+  - xgc2-acados
   packages:
-    - xgc2-acados
+  - xgc2-acados
   depends:
-    - libc6
-    - libgcc-s1
-    - libgomp1
-    - libstdc++6
-    - libblas-dev
-    - python3
-    - python3-deprecated
-    - python3-matplotlib
-    - python3-numpy
-    - python3-scipy
-
+  - libc6
+  - libgcc-s1
+  - libgomp1
+  - libstdc++6
+  - libblas-dev
+  - python3
+  - python3-deprecated
+  - python3-matplotlib
+  - python3-numpy
+  - python3-scipy
 usage:
-  install: |
-    sudo apt update
+  install: 'sudo apt update
+
     sudo apt install xgc2-acados
-  smoke_test: |
-    source /opt/xgc2/acados/setup.bash
-    python3 -c 'from acados_template import AcadosOcp'
-  notes: |
-    CMake consumers should use find_package(xgc2_acados REQUIRED CONFIG).
+
+    '
+  smoke_test: 'source /opt/xgc2/acados/setup.bash
+
+    python3 -c ''from acados_template import AcadosOcp''
+
+    '
+  notes: 'CMake consumers should use find_package(xgc2_acados REQUIRED CONFIG).
+
     MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
+    '
 ownership:
   paths:
-    - /opt/xgc2/acados
-    - /usr/lib/cmake/xgc2_acados
-    - /etc/ld.so.conf.d/xgc2-acados.conf
-
+  - /opt/xgc2/acados
+  - /usr/lib/cmake/xgc2_acados
+  - /etc/ld.so.conf.d/xgc2-acados.conf
 release:
   apt_versions:
-    focal: 0.1.0-3~focal
-    jammy: 0.1.0-3~jammy
-    noble: 0.1.0-3~noble
-
+    focal: 0.1.0-4~focal
+    jammy: 0.1.0-4~jammy
+    noble: 0.1.0-4~noble
 conflicts:
   apt_packages:
-    - ros-noetic-xgc2-acados
+  - ros-noetic-xgc2-acados
