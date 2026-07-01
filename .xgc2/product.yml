@@ -40,6 +40,12 @@ ownership:
     - /usr/lib/cmake/xgc2_acados
     - /etc/ld.so.conf.d/xgc2-acados.conf
 
+release:
+  apt_versions:
+    focal: 0.1.0-3~focal
+    jammy: 0.1.0-3~jammy
+    noble: 0.1.0-3~noble
+
 conflicts:
   apt_packages:
     - ros-noetic-xgc2-acados
