@@ -108,7 +108,7 @@ jobs:
         run: ./.xgc2/scripts/test_acados_native_c.sh
 
   deb-build-and-smoke:
-    needs: package-compliance
+    needs: release-guard
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
