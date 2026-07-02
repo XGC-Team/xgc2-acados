@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
-version: 0.1.0-5
+version: 0.1.0-6
 kind: toolchain-apt
 summary: System-level acados solver stack and Python code-generation dependencies
   for XGC2 projects on Ubuntu 20.04, 22.04, and 24.04.
@@ -45,9 +45,9 @@ ownership:
   - /etc/ld.so.conf.d/xgc2-acados.conf
 release:
   apt_versions:
-    focal: 0.1.0-5~focal
-    jammy: 0.1.0-5~jammy
-    noble: 0.1.0-5~noble
+    focal: 0.1.0-6~focal
+    jammy: 0.1.0-6~jammy
+    noble: 0.1.0-6~noble
 conflicts:
   apt_packages:
   - ros-noetic-xgc2-acados
