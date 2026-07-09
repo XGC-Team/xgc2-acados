@@ -54,15 +54,24 @@ mkdir -p "${output_dir}"
 python_vendor_dir="${stage_dir}${prefix}/python"
 rm -rf "${python_vendor_dir}"
 mkdir -p "${python_vendor_dir}"
+if [[ "${package_distribution}" == "bionic" ]]; then
+  python3 -m pip install --no-cache-dir --upgrade 'pip<22' 'setuptools<60' wheel
+fi
 python3 -m pip install \
   --no-cache-dir \
   --no-deps \
   --target "${python_vendor_dir}" \
   "casadi==${casadi_version}"
+python3 -m pip install \
+  --no-cache-dir \
+  --target "${python_vendor_dir}" \
+  "Deprecated==1.2.14"
 
 PYTHONPATH="${python_vendor_dir}" python3 - <<'PY'
 import casadi
+import deprecated
 print(casadi.__file__)
+print(deprecated.__file__)
 PY
 
 mkdir -p \
@@ -155,7 +164,7 @@ Section: devel
 Priority: optional
 Architecture: ${arch}
 Maintainer: XGC2 <apt@example.com>
-Depends: libc6, libgcc-s1, libgomp1, libstdc++6, libblas-dev, python3, python3-deprecated, python3-matplotlib, python3-numpy, python3-scipy
+Depends: libc6, $(if [[ "${package_distribution}" == "bionic" ]]; then printf 'libgcc1'; else printf 'libgcc-s1'; fi), libgomp1, libstdc++6, libblas-dev, python3, python3-matplotlib, python3-numpy, python3-scipy
 Conflicts: ros-noetic-xgc2-acados
 Replaces: ros-noetic-xgc2-acados
 Description: XGC2 packaged acados solver stack

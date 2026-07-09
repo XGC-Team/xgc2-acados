@@ -27,6 +27,7 @@ fi
 
 python3 - "$acados_root" <<'PY'
 import casadi as ca
+import deprecated
 import json
 import pathlib
 import sys
@@ -44,6 +45,7 @@ from acados_template.utils import (
 acados_root = pathlib.Path(sys.argv[1]).resolve()
 casadi_path = pathlib.Path(ca.__file__).resolve()
 assert acados_root / "python" in casadi_path.parents, casadi_path
+assert acados_root / "python" in pathlib.Path(deprecated.__file__).resolve().parents
 assert pathlib.Path(get_acados_path()).resolve() == acados_root
 assert pathlib.Path(get_python_interface_path()).is_dir()
 assert pathlib.Path(get_tera_exec_path()).is_file()
@@ -99,7 +101,7 @@ probe_ws="${XGC2_ACADOS_SMOKE_WS:-$(mktemp -d -t xgc2-acados-cmake-XXXXXX)}"
 mkdir -p "${probe_ws}/src"
 
 cat > "${probe_ws}/CMakeLists.txt" <<'CMAKE'
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 project(xgc2_acados_link_probe C)
 
 find_package(xgc2_acados REQUIRED CONFIG)
