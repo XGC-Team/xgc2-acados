@@ -72,6 +72,19 @@ cp -a \
   "${source_dir}/interfaces/acados_template/acados_template" \
   "${install_prefix}/interfaces/acados_template/"
 
+if python3 - <<'PY'
+import sys
+raise SystemExit(0 if sys.version_info < (3, 8) else 1)
+PY
+then
+  qp_py="${install_prefix}/interfaces/acados_template/acados_template/acados_ocp_qp.py"
+  sed -i \
+    "s/anomalies = \\[k for k in qp_dict if (s := k.split('_')\\[-1\\]).isdigit() and len(s) != lN\\]/anomalies = [k for k in qp_dict if k.split('_')[-1].isdigit() and len(k.split('_')[-1]) != lN]/" \
+    "${qp_py}"
+fi
+
+python3 -m compileall -q "${install_prefix}/interfaces/acados_template/acados_template"
+
 for matlab_dir in acados_matlab_octave acados_matlab; do
   if [[ -d "${source_dir}/interfaces/${matlab_dir}" ]]; then
     cp -a "${source_dir}/interfaces/${matlab_dir}" "${install_prefix}/interfaces/"
