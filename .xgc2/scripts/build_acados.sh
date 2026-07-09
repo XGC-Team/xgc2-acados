@@ -44,15 +44,18 @@ export ACADOS_VENDOR_SOURCE_DIR="${source_dir}"
 rm -rf "${build_dir}" "${install_prefix}"
 mkdir -p "${build_dir}" "${install_prefix}"
 
-cmake -S "${source_dir}" -B "${build_dir}" \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX="${install_prefix}" \
-  -DACADOS_WITH_PYTHON=OFF \
-  -DACADOS_WITH_QPOASES="${acados_with_qpoases}" \
-  -DACADOS_WITH_OSQP="${acados_with_osqp}" \
-  -DACADOS_UNIT_TESTS=OFF \
-  -DBLASFEO_TARGET="${blasfeo_target}" \
-  -DHPIPM_TARGET="${hpipm_target}"
+(
+  cd "${build_dir}"
+  cmake "${source_dir}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="${install_prefix}" \
+    -DACADOS_WITH_PYTHON=OFF \
+    -DACADOS_WITH_QPOASES="${acados_with_qpoases}" \
+    -DACADOS_WITH_OSQP="${acados_with_osqp}" \
+    -DACADOS_UNIT_TESTS=OFF \
+    -DBLASFEO_TARGET="${blasfeo_target}" \
+    -DHPIPM_TARGET="${hpipm_target}"
+)
 
 cmake --build "${build_dir}" --target install -- -j"${ACADOS_VENDOR_JOBS:-2}"
 

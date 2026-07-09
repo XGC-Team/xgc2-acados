@@ -188,6 +188,7 @@ jobs:
               export PATH="${HOME}/.cargo/bin:${PATH}"
               rustc --version
               cargo --version
+              git config --global --add safe.directory /work
               ./.xgc2/scripts/check_package_compliance.sh
               ./.xgc2/scripts/build_deb.sh
               apt-get install -y ./.ci/debs/xgc2-acados_*.deb

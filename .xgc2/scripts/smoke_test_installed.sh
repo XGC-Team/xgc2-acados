@@ -123,7 +123,8 @@ int main(void)
 }
 C
 
-cmake -S "${probe_ws}" -B "${probe_ws}/build"
+mkdir -p "${probe_ws}/build"
+(cd "${probe_ws}/build" && cmake "${probe_ws}")
 cmake --build "${probe_ws}/build"
 "${probe_ws}/build/link_probe"
 

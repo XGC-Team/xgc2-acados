@@ -43,7 +43,7 @@ for file in "${required_files[@]}"; do
   fi
 done
 
-product_version="$(awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' .xgc2/product.yml)"
+product_version="$(sed -n 's/^version:[[:space:]]*//p' .xgc2/product.yml | head -n 1)"
 if [[ ! "${product_version}" =~ ^[0-9]+(\.[0-9]+){2}-[0-9]+$ ]]; then
   echo "Invalid product version: ${product_version}" >&2
   exit 1
