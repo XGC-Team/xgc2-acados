@@ -76,8 +76,8 @@ generation uses the CasADi Python module vendored inside the `xgc2-acados`
 Debian package, so downstream packages do not need to install CasADi through
 pip.
 
-Ubuntu 18.04 packages pin CasADi to 3.5.5 and vendor the Python `dataclasses`
-backport for Python 3.6 compatibility.
+Ubuntu 18.04 packages pin CasADi to 3.5.5 and vendor Python `dataclasses` and
+`typing_extensions` backports for Python 3.6 compatibility.
 
 ## MATLAB Usage
 

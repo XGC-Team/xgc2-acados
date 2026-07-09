@@ -75,7 +75,8 @@ if [[ "${package_distribution}" == "bionic" ]]; then
     --no-cache-dir \
     --no-deps \
     --target "${python_vendor_dir}" \
-    "dataclasses==0.8"
+    "dataclasses==0.8" \
+    "typing_extensions==4.1.1"
 fi
 
 PYTHONPATH="${python_vendor_dir}" python3 - <<'PY'
@@ -85,10 +86,16 @@ try:
 except ImportError:
     dataclasses = None
 import deprecated
+try:
+    import typing_extensions
+except ImportError:
+    typing_extensions = None
 print(casadi.__file__)
 if dataclasses is not None:
     print(dataclasses.__file__)
 print(deprecated.__file__)
+if typing_extensions is not None:
+    print(typing_extensions.__file__)
 PY
 
 mkdir -p \
