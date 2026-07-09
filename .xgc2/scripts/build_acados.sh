@@ -109,6 +109,7 @@ export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-/opt/xgc2/acados}"
 export ACADOS_INSTALL_DIR="${ACADOS_INSTALL_DIR:-${ACADOS_SOURCE_DIR}}"
 export ACADOS_PYTHON_INTERFACE_PATH="${ACADOS_PYTHON_INTERFACE_PATH:-${ACADOS_SOURCE_DIR}/interfaces/acados_template/acados_template}"
 export TERA_PATH="${TERA_PATH:-${ACADOS_SOURCE_DIR}/bin/t_renderer}"
+export MPLBACKEND="${MPLBACKEND:-Agg}"
 case ":${PYTHONPATH:-}:" in
   *":${ACADOS_SOURCE_DIR}/interfaces/acados_template:"*) ;;
   *) export PYTHONPATH="${ACADOS_SOURCE_DIR}/interfaces/acados_template${PYTHONPATH:+:${PYTHONPATH}}" ;;

@@ -79,6 +79,9 @@ pip.
 Ubuntu 18.04 packages pin CasADi to 3.5.5 and vendor Python `dataclasses` and
 `typing_extensions` backports for Python 3.6 compatibility.
 
+`setup.bash` defaults `MPLBACKEND` to `Agg` so importing acados templates works
+on headless robots and CI images without a Tk runtime.
+
 ## MATLAB Usage
 
 ```matlab
