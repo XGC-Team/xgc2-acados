@@ -25,6 +25,10 @@ if [[ -z "${package_distribution}" && -r /etc/os-release ]]; then
   package_distribution="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
 fi
 
+if [[ "${package_distribution}" == "bionic" && -z "${CASADI_VERSION:-}" ]]; then
+  casadi_version="3.5.5"
+fi
+
 if [[ -n "${PACKAGE_VERSION:-}" ]]; then
   version="${PACKAGE_VERSION}"
 else

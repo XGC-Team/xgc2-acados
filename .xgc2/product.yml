@@ -36,6 +36,9 @@ usage:
 
     MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
+    Bionic packages use CasADi 3.5.5 for Python 3.6 and Ubuntu 18.04 libstdc++
+    compatibility; newer distributions use CasADi 3.7.2 by default.
+
     '
 ownership:
   paths:
