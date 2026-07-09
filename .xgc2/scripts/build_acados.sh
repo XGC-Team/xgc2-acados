@@ -78,12 +78,14 @@ raise SystemExit(0 if sys.version_info < (3, 8) else 1)
 PY
 then
   qp_py="${install_prefix}/interfaces/acados_template/acados_template/acados_ocp_qp.py"
+  solver_py="${install_prefix}/interfaces/acados_template/acados_template/acados_ocp_solver.py"
   sed -i \
     "s/anomalies = \\[k for k in qp_dict if (s := k.split('_')\\[-1\\]).isdigit() and len(s) != lN\\]/anomalies = [k for k in qp_dict if k.split('_')[-1].isdigit() and len(k.split('_')[-1]) != lN]/" \
     "${qp_py}"
+  sed -i \
+    's/raise NotImplementedError(f"eval_and_get_optimal_value_hessian is not implemented for {with_respect_to=}.")/raise NotImplementedError(f"eval_and_get_optimal_value_hessian is not implemented for with_respect_to = {with_respect_to}.")/' \
+    "${solver_py}"
 fi
-
-python3 -m compileall -q "${install_prefix}/interfaces/acados_template/acados_template"
 
 for matlab_dir in acados_matlab_octave acados_matlab; do
   if [[ -d "${source_dir}/interfaces/${matlab_dir}" ]]; then
