@@ -70,11 +70,24 @@ python3 -m pip install \
   --no-cache-dir \
   --target "${python_vendor_dir}" \
   "Deprecated==1.2.14"
+if [[ "${package_distribution}" == "bionic" ]]; then
+  python3 -m pip install \
+    --no-cache-dir \
+    --no-deps \
+    --target "${python_vendor_dir}" \
+    "dataclasses==0.8"
+fi
 
 PYTHONPATH="${python_vendor_dir}" python3 - <<'PY'
 import casadi
+try:
+    import dataclasses
+except ImportError:
+    dataclasses = None
 import deprecated
 print(casadi.__file__)
+if dataclasses is not None:
+    print(dataclasses.__file__)
 print(deprecated.__file__)
 PY
 
