@@ -102,6 +102,7 @@ jobs:
       - name: Build deb and run installed smoke test
         run: |
           set -euo pipefail
+          install -d .ci/build-manifests
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/work" \
             -w /work \
