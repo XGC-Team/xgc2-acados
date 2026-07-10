@@ -11,11 +11,11 @@ product_version() {
 }
 
 package_base_version="${PACKAGE_BASE_VERSION:-$(product_version)}"
-package_distribution="${PACKAGE_DISTRIBUTION:-${APT_REPO_DISTRIBUTION:-}}"
+package_distribution="${PACKAGE_DISTRIBUTION:-}"
 casadi_version="${CASADI_VERSION:-3.7.2}"
 prefix="${XGC2_ACADOS_PREFIX:-/opt/xgc2/acados}"
 stage_dir="${XGC2_ACADOS_STAGE_DIR:-${repo_root}/.ci/stage}"
-output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${repo_root}/.ci/debs}"
+output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${repo_root}/debs}"
 pkg_root="${repo_root}/.ci/pkg/${package_name}"
 arch="$(dpkg --print-architecture)"
 
