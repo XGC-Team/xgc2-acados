@@ -58,26 +58,49 @@ mkdir -p "${output_dir}"
 python_vendor_dir="${stage_dir}${prefix}/python"
 rm -rf "${python_vendor_dir}"
 mkdir -p "${python_vendor_dir}"
-if [[ "${package_distribution}" == "bionic" ]]; then
-  python3 -m pip install --no-cache-dir --upgrade 'pip<22' 'setuptools<60' wheel
-fi
-python3 -m pip install \
-  --no-cache-dir \
-  --no-deps \
-  --target "${python_vendor_dir}" \
-  "casadi==${casadi_version}"
-python3 -m pip install \
-  --no-cache-dir \
-  --target "${python_vendor_dir}" \
-  "Deprecated==1.2.14"
-if [[ "${package_distribution}" == "bionic" ]]; then
-  python3 -m pip install \
-    --no-cache-dir \
-    --no-deps \
-    --target "${python_vendor_dir}" \
-    "dataclasses==0.8" \
-    "typing_extensions==4.1.1"
-fi
+# CasADi is provided by the XGC2 build image. Copy it into the package so
+# product CI stays offline and does not pip-install.
+python3 - "${python_vendor_dir}" "${casadi_version}" <<'PY'
+import importlib
+import pathlib
+import shutil
+import sys
+
+dest = pathlib.Path(sys.argv[1])
+expected = sys.argv[2]
+dest.mkdir(parents=True, exist_ok=True)
+
+casadi = importlib.import_module("casadi")
+if casadi.__version__ != expected:
+    raise SystemExit(
+        f"image CasADi {casadi.__version__} != required {expected}; "
+        "use xgc2-build-*-dev"
+    )
+casadi_root = pathlib.Path(casadi.__file__).resolve().parent
+shutil.copytree(casadi_root, dest / "casadi", dirs_exist_ok=True)
+
+deprecated = importlib.import_module("deprecated")
+dep_file = pathlib.Path(deprecated.__file__).resolve()
+dep_root = dep_file.parent if dep_file.name == "__init__.py" else dep_file
+if dep_root.is_dir():
+    shutil.copytree(dep_root, dest / dep_root.name, dirs_exist_ok=True)
+else:
+    shutil.copy2(dep_root, dest / dep_root.name)
+
+for name in ("dataclasses", "typing_extensions"):
+    try:
+        mod = importlib.import_module(name)
+    except ImportError:
+        continue
+    path = pathlib.Path(mod.__file__).resolve()
+    root = path.parent if path.name == "__init__.py" else path
+    if root.is_dir():
+        shutil.copytree(root, dest / root.name, dirs_exist_ok=True)
+    else:
+        shutil.copy2(root, dest / path.name)
+
+print(casadi.__version__, casadi_root)
+PY
 
 PYTHONPATH="${python_vendor_dir}" python3 - <<'PY'
 import casadi

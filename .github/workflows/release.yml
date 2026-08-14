@@ -130,7 +130,7 @@ jobs:
   acados-native-c-tests:
     if: ${{ inputs.run_source_tests }}
     needs: release-guard
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -140,12 +140,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install native test dependencies
+      - name: Run acados native C/C++ tests
         run: |
           set -euo pipefail
-
-      - name: Run acados native C/C++ tests
-        run: ./.xgc2/scripts/test_acados_native_c.sh
+          image=ghcr.io/xgc-team/xgc2-images/xgc2-build-jammy-dev:1.0.0
+          docker pull "${image}"
+          docker run --rm \
+            -e ACADOS_NATIVE_TEST_JOBS \
+            -v "${GITHUB_WORKSPACE}:/work" -w /work \
+            "${image}" \
+            bash -lc '
+              set -euo pipefail
+              git config --global --add safe.directory /work
+              python3 -c "import casadi"
+              ./.xgc2/scripts/test_acados_native_c.sh
+            '
 
   deb-build-and-smoke:
     needs: release-guard
@@ -234,6 +243,7 @@ jobs:
               command -v cargo >/dev/null
               rustc --version
               cargo --version
+              python3 -c "import casadi, deprecated"
               git config --global --add safe.directory /work
               ./.xgc2/scripts/check_package_compliance.sh
               ./.xgc2/scripts/build_deb.sh

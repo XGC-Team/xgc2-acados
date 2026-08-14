@@ -71,13 +71,10 @@ source /opt/xgc2/acados/setup.bash
 python3 -c 'from acados_template import AcadosOcp, AcadosOcpSolver'
 ```
 
-The package provides acados' Python template code and path setup. Python solver
-generation uses the CasADi Python module vendored inside the `xgc2-acados`
-Debian package, so downstream packages do not need to install CasADi through
-pip.
-
-Ubuntu 18.04 packages pin CasADi to 3.5.5 and vendor Python `dataclasses` and
-`typing_extensions` backports for Python 3.6 compatibility.
+The package provides acados' Python template code, the solver libraries, and
+path setup. CasADi itself is pinned in the XGC2 `dev` build images
+(3.7.2 on focal/jammy/noble, 3.5.5 on bionic). Packaging copies that module
+out of the image; it does not `pip install` CasADi during CI.
 
 `setup.bash` defaults `MPLBACKEND` to `Agg` so importing acados templates works
 on headless robots and CI images without a Tk runtime.

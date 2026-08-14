@@ -36,9 +36,8 @@ usage:
 
     MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
-    Bionic packages use CasADi 3.5.5 plus vendored dataclasses and typing_extensions
-    backports for Python 3.6 and Ubuntu 18.04 libstdc++ compatibility; newer distributions
-    use CasADi 3.7.2 by default.
+    CasADi is provided by the XGC2 build image (3.5.5 on bionic, 3.7.2
+    elsewhere) and copied into the package. Product CI does not pip-install it.
 
     setup.bash defaults MPLBACKEND to Agg for headless robot and CI runtime.
 
