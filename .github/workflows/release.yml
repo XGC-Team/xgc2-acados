@@ -29,16 +29,6 @@ on:
         required: false
         default: ""
         type: string
-      run_cpp_quality:
-        description: Run C++ quality checks
-        required: true
-        default: false
-        type: boolean
-      run_source_tests:
-        description: Run source tests
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   actions: read
@@ -75,7 +65,6 @@ jobs:
             echo "apt_overlay_url requires a dependency_set_digest" >&2
             exit 1
           fi
-
   release-guard:
     needs: prepare-contract
     runs-on: ubuntu-latest
@@ -85,21 +74,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Validate release inputs
-        run: |
-          set -euo pipefail
-          product_version="$(awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' .xgc2/product.yml)"
-          if [[ "${product_version}" != "${{ inputs.expected_version }}" ]]; then
-            echo "product.yml version ${product_version} != expected_version ${{ inputs.expected_version }}" >&2
-            exit 1
-          fi
-          source_sha="$(git rev-parse HEAD)"
-          if [[ "${source_sha}" != "${{ inputs.expected_source_sha }}" ]]; then
-            echo "HEAD ${source_sha} != expected_source_sha ${{ inputs.expected_source_sha }}" >&2
-            exit 1
-          fi
-
   package-compliance:
     needs: release-guard
     runs-on: ubuntu-latest
@@ -109,15 +83,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Check whitespace
-        run: git diff --check HEAD
-
-      - name: Package compliance
-        run: ./.xgc2/scripts/check_package_compliance.sh
-
   cpp-quality:
-    if: ${{ inputs.run_cpp_quality }}
     needs: release-guard
     runs-on: ubuntu-latest
     defaults:
@@ -126,9 +92,7 @@ jobs:
     steps:
       - name: No C++ quality gate configured
         run: echo "No standalone C++ quality gate is configured for xgc2-acados."
-
   acados-native-c-tests:
-    if: ${{ inputs.run_source_tests }}
     needs: release-guard
     runs-on: ubuntu-latest
     defaults:
@@ -139,23 +103,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Run acados native C/C++ tests
-        run: |
-          set -euo pipefail
-          image=ghcr.io/xgc-team/xgc2-images/xgc2-build-jammy-dev:1.0.0
-          docker pull "${image}"
-          docker run --rm \
-            -e ACADOS_NATIVE_TEST_JOBS \
-            -v "${GITHUB_WORKSPACE}:/work" -w /work \
-            "${image}" \
-            bash -lc '
-              set -euo pipefail
-              git config --global --add safe.directory /work
-              python3 -c "import casadi"
-              ./.xgc2/scripts/test_acados_native_c.sh
-            '
-
   deb-build-and-smoke:
     needs: release-guard
     runs-on: ${{ matrix.runner }}
@@ -203,6 +150,48 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+
+
+      - name: Validate release inputs
+        run: |
+          set -euo pipefail
+          product_version="$(awk -F': *' '/^version:[[:space:]]*/ {print $2; exit}' .xgc2/product.yml)"
+          if [[ "${product_version}" != "${{ inputs.expected_version }}" ]]; then
+            echo "product.yml version ${product_version} != expected_version ${{ inputs.expected_version }}" >&2
+            exit 1
+          fi
+          source_sha="$(git rev-parse HEAD)"
+          if [[ "${source_sha}" != "${{ inputs.expected_source_sha }}" ]]; then
+            echo "HEAD ${source_sha} != expected_source_sha ${{ inputs.expected_source_sha }}" >&2
+            exit 1
+          fi
+
+
+      - name: Check whitespace
+        run: git diff --check HEAD
+
+      - name: Package compliance
+        run: ./.xgc2/scripts/check_package_compliance.sh
+
+
+
+      - name: Run acados native C/C++ tests
+        run: |
+          set -euo pipefail
+          image=ghcr.io/xgc-team/xgc2-images/xgc2-build-jammy-dev:1.0.0
+          docker pull "${image}"
+          docker run --rm \
+            -e ACADOS_NATIVE_TEST_JOBS \
+            -v "${GITHUB_WORKSPACE}:/work" -w /work \
+            "${image}" \
+            bash -lc '
+              set -euo pipefail
+              git config --global --add safe.directory /work
+              python3 -c "import casadi"
+              ./.xgc2/scripts/test_acados_native_c.sh
+            '
+
 
       - name: Build deb and run installed smoke test
         run: |
