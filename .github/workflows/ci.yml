@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Check package metadata
+        run: |
+          git diff --check HEAD
+          ./.xgc2/scripts/check_package_compliance.sh
   acados-native-c-tests:
     runs-on: ubuntu-latest
     defaults:
@@ -28,6 +33,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Run acados native C/C++ tests
+        run: |
+          set -euo pipefail
+          image=ghcr.io/xgc-team/xgc2-images/xgc2-build-jammy-dev:1.0.0
+          docker pull "${image}"
+          docker run --rm \
+            -e ACADOS_NATIVE_TEST_JOBS \
+            -v "${GITHUB_WORKSPACE}:/work" -w /work \
+            "${image}" \
+            bash -lc '
+              set -euo pipefail
+              git config --global --add safe.directory /work
+              python3 -c "import casadi"
+              ./.xgc2/scripts/test_acados_native_c.sh
+            '
   deb-build-and-smoke:
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -81,23 +102,6 @@ jobs:
 
       - name: Package compliance
         run: ./.xgc2/scripts/check_package_compliance.sh
-
-
-      - name: Run acados native C/C++ tests
-        run: |
-          set -euo pipefail
-          image=ghcr.io/xgc-team/xgc2-images/xgc2-build-jammy-dev:1.0.0
-          docker pull "${image}"
-          docker run --rm \
-            -e ACADOS_NATIVE_TEST_JOBS \
-            -v "${GITHUB_WORKSPACE}:/work" -w /work \
-            "${image}" \
-            bash -lc '
-              set -euo pipefail
-              git config --global --add safe.directory /work
-              python3 -c "import casadi"
-              ./.xgc2/scripts/test_acados_native_c.sh
-            '
 
 
       - name: Build deb and run installed smoke test
