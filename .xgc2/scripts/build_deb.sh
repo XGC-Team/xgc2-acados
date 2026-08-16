@@ -70,6 +70,20 @@ dest = pathlib.Path(sys.argv[1])
 expected = sys.argv[2]
 dest.mkdir(parents=True, exist_ok=True)
 
+
+def copytree_merge(source, destination):
+    """Copy a directory into an existing tree on Python 3.6 and newer."""
+
+    if not destination.exists():
+        shutil.copytree(str(source), str(destination))
+        return
+    for child in source.iterdir():
+        target = destination / child.name
+        if child.is_dir():
+            copytree_merge(child, target)
+        else:
+            shutil.copy2(str(child), str(target))
+
 casadi = importlib.import_module("casadi")
 if casadi.__version__ != expected:
     raise SystemExit(
@@ -77,13 +91,13 @@ if casadi.__version__ != expected:
         "use xgc2-build-*-dev"
     )
 casadi_root = pathlib.Path(casadi.__file__).resolve().parent
-shutil.copytree(casadi_root, dest / "casadi", dirs_exist_ok=True)
+copytree_merge(casadi_root, dest / "casadi")
 
 deprecated = importlib.import_module("deprecated")
 dep_file = pathlib.Path(deprecated.__file__).resolve()
 dep_root = dep_file.parent if dep_file.name == "__init__.py" else dep_file
 if dep_root.is_dir():
-    shutil.copytree(dep_root, dest / dep_root.name, dirs_exist_ok=True)
+    copytree_merge(dep_root, dest / dep_root.name)
 else:
     shutil.copy2(dep_root, dest / dep_root.name)
 
@@ -95,7 +109,7 @@ for name in ("dataclasses", "typing_extensions"):
     path = pathlib.Path(mod.__file__).resolve()
     root = path.parent if path.name == "__init__.py" else path
     if root.is_dir():
-        shutil.copytree(root, dest / root.name, dirs_exist_ok=True)
+        copytree_merge(root, dest / root.name)
     else:
         shutil.copy2(root, dest / path.name)
 
