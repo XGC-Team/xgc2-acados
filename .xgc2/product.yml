@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-acados
 name: XGC2 acados
-version: 0.1.0-16
+version: 0.1.0-17
 kind: toolchain-apt
 summary: System-level acados solver stack and Python code-generation dependencies
   for XGC2 projects on Ubuntu 18.04, 20.04, 22.04, and 24.04.
@@ -21,6 +21,7 @@ apt:
   - python3-matplotlib
   - python3-numpy
   - python3-scipy
+  - python3-wrapt
 usage:
   install: 'sudo apt update
 
@@ -49,10 +50,10 @@ ownership:
   - /etc/ld.so.conf.d/xgc2-acados.conf
 release:
   apt_versions:
-    bionic: 0.1.0-16~bionic
-    focal: 0.1.0-16~focal
-    jammy: 0.1.0-16~jammy
-    noble: 0.1.0-16~noble
+    bionic: 0.1.0-17~bionic
+    focal: 0.1.0-17~focal
+    jammy: 0.1.0-17~jammy
+    noble: 0.1.0-17~noble
 conflicts:
   apt_packages:
   - ros-noetic-xgc2-acados
