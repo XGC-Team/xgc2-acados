@@ -131,14 +131,15 @@ jobs:
                 python3-matplotlib \
                 python3-numpy \
                 python3-pip \
-                python3-scipy \
-                python3-wrapt
+                python3-scipy
               do
                 if ! dpkg -s "${pkg}" >/dev/null 2>&1; then
                   echo "image is missing ${pkg}; use xgc2-build-*-dev" >&2
                   exit 1
                 fi
               done
+              apt-get update
+              apt-get install -y --no-install-recommends python3-wrapt
               command -v rustc >/dev/null
               command -v cargo >/dev/null
               rustc --version
