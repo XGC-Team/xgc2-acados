@@ -101,7 +101,7 @@ if dep_root.is_dir():
 else:
     shutil.copy2(dep_root, dest / dep_root.name)
 
-for name in ("dataclasses", "typing_extensions"):
+for name in ("dataclasses", "typing_extensions", "wrapt"):
     try:
         mod = importlib.import_module(name)
     except ImportError:
@@ -127,12 +127,14 @@ try:
     import typing_extensions
 except ImportError:
     typing_extensions = None
+import wrapt
 print(casadi.__file__)
 if dataclasses is not None:
     print(dataclasses.__file__)
 print(deprecated.__file__)
 if typing_extensions is not None:
     print(typing_extensions.__file__)
+print(wrapt.__file__)
 PY
 
 mkdir -p \
@@ -225,7 +227,7 @@ Section: devel
 Priority: optional
 Architecture: ${arch}
 Maintainer: XGC2 <apt@example.com>
-Depends: libc6, $(if [[ "${package_distribution}" == "bionic" ]]; then printf 'libgcc1'; else printf 'libgcc-s1'; fi), libgomp1, libstdc++6, libblas-dev, python3, python3-matplotlib, python3-numpy, python3-scipy, python3-wrapt
+Depends: libc6, $(if [[ "${package_distribution}" == "bionic" ]]; then printf 'libgcc1'; else printf 'libgcc-s1'; fi), libgomp1, libstdc++6, libblas-dev, python3, python3-matplotlib, python3-numpy, python3-scipy
 Conflicts: ros-noetic-xgc2-acados
 Replaces: ros-noetic-xgc2-acados
 Description: XGC2 packaged acados solver stack

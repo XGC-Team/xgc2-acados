@@ -21,7 +21,6 @@ apt:
   - python3-matplotlib
   - python3-numpy
   - python3-scipy
-  - python3-wrapt
 usage:
   install: 'sudo apt update
 
@@ -37,8 +36,8 @@ usage:
 
     MATLAB users should run /opt/xgc2/acados/setup_acados.m.
 
-    CasADi is provided by the XGC2 build image (3.5.5 on bionic, 3.7.2
-    elsewhere) and copied into the package. Product CI does not pip-install it.
+    CasADi and its Python support modules are provided by the XGC2 build image
+    and copied into the package. Product CI does not pip-install them.
 
     setup.bash defaults MPLBACKEND to Agg for headless robot and CI runtime.
 
