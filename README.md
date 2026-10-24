@@ -101,3 +101,12 @@ sudo apt-get install -y ./.ci/debs/xgc2-acados_*.deb
 ```
 
 CI runs this build for Ubuntu 20.04 and Ubuntu 24.04 on amd64 and arm64.
+
+### Native, SDK and runtime staging
+
+`build_acados.sh` builds the locked upstream native solver stack.
+`stage_sdk.sh NATIVE_INSTALL_ROOT DESTINATION_ROOT` adds the source-owned SDK
+metadata and code-generation environment. `build_deb.sh` composes these entries
+with Debian packaging. `stage_runtime.sh NATIVE_INSTALL_ROOT DESTINATION_ROOT`
+stages only native controller libraries and runtime environment configuration;
+SDK headers, code generators and optional solver plugins stay in the builder.
