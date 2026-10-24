@@ -23,6 +23,7 @@ jobs:
         run: |
           git diff --check HEAD
           ./.xgc2/scripts/check_package_compliance.sh
+          python3 .xgc2/scripts/test_lazy_plot_exports.py
   acados-native-c-tests:
     runs-on: ubuntu-latest
     defaults:
@@ -128,7 +129,6 @@ jobs:
                 git \
                 libblas-dev \
                 python3 \
-                python3-matplotlib \
                 python3-numpy \
                 python3-pip \
                 python3-scipy
@@ -145,6 +145,7 @@ jobs:
               python3 -c "import casadi, deprecated"
               git config --global --add safe.directory /work
               ./.xgc2/scripts/check_package_compliance.sh
+          python3 .xgc2/scripts/test_lazy_plot_exports.py
               ./.xgc2/scripts/build_deb.sh
               dpkg -i ./debs/xgc2-acados_*.deb
               ./.xgc2/scripts/smoke_test_installed.sh

@@ -35,6 +35,13 @@ import tempfile
 
 import numpy as np
 import wrapt
+# A preinstalled optional plot backend must not hide an eager solver import.
+class RejectPlottingImport:
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "matplotlib" or fullname.startswith("matplotlib."):
+            raise ImportError("solver/code generation must not import optional plotting")
+        return None
+sys.meta_path.insert(0, RejectPlottingImport())
 from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
 from acados_template.utils import (
     get_acados_path,

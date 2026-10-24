@@ -110,3 +110,9 @@ metadata and code-generation environment. `build_deb.sh` composes these entries
 with Debian packaging. `stage_runtime.sh NATIVE_INSTALL_ROOT DESTINATION_ROOT`
 stages only native controller libraries and runtime environment configuration;
 SDK headers, code generators and optional solver plugins stay in the builder.
+
+The staged SDK keeps the upstream plotting exports lazy. Importing AcadosModel,
+AcadosOcp or AcadosOcpSolver for numerical work/code generation does not require
+Matplotlib. Install Matplotlib separately only when explicitly using plotting
+helpers; it is not a mandatory package dependency or a controller runtime dependency.
+The same SDK staging entry is used by product CI and source builds.
