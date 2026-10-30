@@ -12,7 +12,6 @@ product_version() {
 
 package_base_version="${PACKAGE_BASE_VERSION:-$(product_version)}"
 package_distribution="${PACKAGE_DISTRIBUTION:-}"
-casadi_version="${CASADI_VERSION:-3.7.2}"
 prefix="${XGC2_ACADOS_PREFIX:-/opt/xgc2/acados}"
 stage_dir="${XGC2_ACADOS_STAGE_DIR:-${repo_root}/.ci/stage}"
 output_dir="${XGC2_ACADOS_DEB_OUTPUT_DIR:-${repo_root}/debs}"
@@ -23,10 +22,6 @@ if [[ -z "${package_distribution}" && -r /etc/os-release ]]; then
   # shellcheck disable=SC1091
   . /etc/os-release
   package_distribution="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
-fi
-
-if [[ "${package_distribution}" == "bionic" && -z "${CASADI_VERSION:-}" ]]; then
-  casadi_version="3.5.5"
 fi
 
 if [[ -n "${PACKAGE_VERSION:-}" ]]; then
@@ -96,6 +91,9 @@ find "${pkg_root}" -type d -exec chmod 0755 {} +
 find "${pkg_root}" -type f -exec chmod 0644 {} +
 chmod 0755 "${pkg_root}/DEBIAN" "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
 chmod 0755 "${pkg_root}${prefix}/setup.bash" "${pkg_root}${prefix}/bin/t_renderer"
+if [[ "${package_distribution}" == bionic ]]; then
+  find "${pkg_root}${prefix}/codegen-python/bin" -type f -name 'python3*' -exec chmod 0755 {} +
+fi
 find "${pkg_root}${prefix}" -type f \( -name '*.so' -o -name '*.so.*' -o -perm -0100 \) \
   -exec strip --strip-unneeded {} + 2>/dev/null || true
 

@@ -28,7 +28,7 @@ usage:
     '
   smoke_test: 'source /opt/xgc2/acados/setup.bash
 
-    python3 -c ''from acados_template import AcadosOcp''
+    "$XGC2_ACADOS_PYTHON" -c ''from acados_template import AcadosOcp''
 
     '
   notes: 'CMake consumers should use find_package(xgc2_acados REQUIRED CONFIG).
@@ -39,6 +39,9 @@ usage:
     copied into the package. Product CI does not pip-install them.
 
     setup.bash defaults MPLBACKEND to Agg for headless robot and CI runtime.
+
+    Code generation uses XGC2_ACADOS_PYTHON from setup.bash. Bionic ships a private
+    Python 3.12.12 runtime; the system/ROS Python 3.6 remains unchanged.
 
     '
 ownership:

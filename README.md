@@ -74,13 +74,23 @@ acados_vendor_require()
 
 ```bash
 source /opt/xgc2/acados/setup.bash
-python3 -c 'from acados_template import AcadosOcp, AcadosOcpSolver'
+"$XGC2_ACADOS_PYTHON" -c 'from acados_template import AcadosOcp, AcadosOcpSolver'
 ```
 
 The package provides acados' Python template code, the solver libraries, and
-path setup. CasADi itself is pinned in the XGC2 `dev` build images
-(3.7.2 on focal/jammy/noble, 3.5.5 on bionic). Packaging copies that module
-out of the image; it does not `pip install` CasADi during CI.
+path setup. CasADi 3.7.2 is supplied by the controlled build images and copied
+into the package; leaf CI and robot installation do not pip-install it.
+
+Ubuntu 20.04 and newer use `/usr/bin/python3`. Ubuntu 18.04 keeps its system
+and ROS Python 3.6 untouched: the package includes a private, relocatable
+Python 3.12.12 code-generation environment under
+`/opt/xgc2/acados/codegen-python`. Source `setup.bash` and invoke
+`"$XGC2_ACADOS_PYTHON"` for code generation; the selected interpreter is also
+exported as `XGC2_ACADOS_CODEGEN_PYTHON` by the CMake package. A missing private
+runtime on Bionic is an installation error, not a reason to use Python 3.6.
+The same released package is installed and verified by the robot baseline
+and the robot runtime/builder images. There is no per-target Python download
+or source-build fallback. The compiled C/C++ solver does not require Python.
 
 `setup.bash` defaults `MPLBACKEND` to `Agg` so importing acados templates works
 on headless robots and CI images without a Tk runtime.

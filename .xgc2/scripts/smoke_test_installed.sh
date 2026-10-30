@@ -25,7 +25,7 @@ if grep -q "not found" /tmp/xgc2-acados-libacados-ldd.txt; then
   exit 1
 fi
 
-python3 - "$acados_root" <<'PY'
+"${XGC2_ACADOS_PYTHON:?package setup must select the code-generation interpreter}" - "$acados_root" <<'PY'
 import casadi as ca
 import deprecated
 import json
@@ -56,9 +56,14 @@ lock = dict(line.split("=", 1) for line in (acados_root / "acados.lock").read_te
 assert lock["ACADOS_REF"] == "v0.6.0", lock
 assert lock["ACADOS_SHA"] == "503364817c872d474ab5bed219c26760ac267769", lock
 casadi_path = pathlib.Path(ca.__file__).resolve()
-assert acados_root / "python" in casadi_path.parents, casadi_path
-assert acados_root / "python" in pathlib.Path(deprecated.__file__).resolve().parents
-assert acados_root / "python" in pathlib.Path(wrapt.__file__).resolve().parents
+assert ca.__version__ == lock["CASADI_VERSION"] == "3.7.2", ca.__version__
+python_vendor = (acados_root / "python").resolve()
+assert python_vendor in casadi_path.parents, casadi_path
+assert python_vendor in pathlib.Path(deprecated.__file__).resolve().parents
+assert python_vendor in pathlib.Path(wrapt.__file__).resolve().parents
+if (acados_root / "codegen-python").is_dir():
+    assert sys.version_info[:3] == tuple(map(int, lock["BIONIC_CODEGEN_PYTHON_VERSION"].split("."))), sys.version
+    assert acados_root in pathlib.Path(sys.executable).resolve().parents
 assert pathlib.Path(get_acados_path()).resolve() == acados_root
 assert pathlib.Path(get_python_interface_path()).is_dir()
 assert pathlib.Path(get_tera_exec_path()).is_file()
