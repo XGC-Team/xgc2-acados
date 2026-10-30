@@ -55,6 +55,7 @@ assert acados_root in pathlib.Path(sys.modules["acados_template"].__file__).reso
 lock = dict(line.split("=", 1) for line in (acados_root / "acados.lock").read_text().splitlines() if "=" in line)
 assert lock["ACADOS_REF"] == "v0.6.0", lock
 assert lock["ACADOS_SHA"] == "503364817c872d474ab5bed219c26760ac267769", lock
+assert lock["XGC2_PACKAGE_VERSION"] == "0.6.0-1", lock
 casadi_path = pathlib.Path(ca.__file__).resolve()
 assert ca.__version__ == lock["CASADI_VERSION"] == "3.7.2", ca.__version__
 python_vendor = (acados_root / "python").resolve()
@@ -128,6 +129,12 @@ project(xgc2_acados_link_probe C)
 
 find_package(xgc2_acados REQUIRED CONFIG)
 xgc2_acados_require()
+if(NOT XGC2_ACADOS_IDENTITY_FILE STREQUAL "${XGC2_ACADOS_ROOT}/acados.lock")
+  message(FATAL_ERROR "SDK identity must describe the installed package")
+endif()
+if(NOT XGC2_ACADOS_CODEGEN_PYTHON STREQUAL "$ENV{XGC2_ACADOS_PYTHON}")
+  message(FATAL_ERROR "CMake and setup.bash selected different code-generation interpreters")
+endif()
 
 add_executable(link_probe src/link_probe.c)
 target_include_directories(link_probe PRIVATE ${XGC2_ACADOS_INCLUDE_DIRS})

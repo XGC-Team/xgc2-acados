@@ -53,6 +53,11 @@ mkdir -p "${output_dir}"
 "${script_dir}/stage_sdk.sh" "${stage_dir}" "${pkg_root}"
 mkdir -p "${pkg_root}/DEBIAN" "${pkg_root}/usr/share/doc/${package_name}"
 
+python_dependencies=""
+if [[ "${package_distribution}" != bionic ]]; then
+  python_dependencies=", python3, python3-numpy, python3-scipy"
+fi
+
 cat > "${pkg_root}/DEBIAN/control" <<EOF
 Package: ${package_name}
 Version: ${version}
@@ -60,7 +65,7 @@ Section: devel
 Priority: optional
 Architecture: ${arch}
 Maintainer: XGC2 <apt@example.com>
-Depends: libc6, $(if [[ "${package_distribution}" == "bionic" ]]; then printf 'libgcc1'; else printf 'libgcc-s1'; fi), libgomp1, libstdc++6, libblas-dev, python3, python3-numpy, python3-scipy
+Depends: libc6, $(if [[ "${package_distribution}" == "bionic" ]]; then printf 'libgcc1'; else printf 'libgcc-s1'; fi), libgomp1, libstdc++6, libblas-dev${python_dependencies}
 Conflicts: ros-noetic-xgc2-acados
 Replaces: ros-noetic-xgc2-acados
 Description: XGC2 packaged acados solver stack

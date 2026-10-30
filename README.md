@@ -82,7 +82,7 @@ path setup. CasADi 3.7.2 is supplied by the controlled build images and copied
 into the package; leaf CI and robot installation do not pip-install it.
 
 Ubuntu 20.04 and newer use `/usr/bin/python3`. Ubuntu 18.04 keeps its system
-and ROS Python 3.6 untouched: the package includes a private, relocatable
+Python 3.6 and existing ROS environment untouched: the package includes a private, relocatable
 Python 3.12.12 code-generation environment under
 `/opt/xgc2/acados/codegen-python`. Source `setup.bash` and invoke
 `"$XGC2_ACADOS_PYTHON"` for code generation; the selected interpreter is also

@@ -120,6 +120,9 @@ mkdir -p \
 
 cp -a "${stage_dir}/opt" "${pkg_root}/"
 install -m 0644 "${repo_root}/acados.lock" "${pkg_root}${prefix}/acados.lock"
+package_version="$(sed -n 's/^version:[[:space:]]*//p' "${repo_root}/.xgc2/product.yml" | head -n 1)"
+test -n "${package_version}"
+printf 'XGC2_PACKAGE_VERSION=%s\n' "${package_version}" >> "${pkg_root}${prefix}/acados.lock"
 python3 "${script_dir}/lazy_plot_exports.py" "${pkg_root}${prefix}/interfaces/acados_template/acados_template/__init__.py"
 printf '\nexport XGC2_ACADOS_PYTHON=%q\n' "${installed_codegen_python}" >> "${pkg_root}${prefix}/setup.bash"
 
@@ -134,6 +137,7 @@ endif()
 set(_XGC2_ACADOS_CONFIG_INCLUDED TRUE)
 
 set(XGC2_ACADOS_ROOT "/opt/xgc2/acados")
+set(XGC2_ACADOS_IDENTITY_FILE "${XGC2_ACADOS_ROOT}/acados.lock")
 set(XGC2_ACADOS_SOURCE_DIR "${XGC2_ACADOS_ROOT}")
 set(XGC2_ACADOS_ACADOS_SOURCE_DIR "${XGC2_ACADOS_ROOT}")
 set(XGC2_ACADOS_INSTALL_DIR "${XGC2_ACADOS_ROOT}")
@@ -169,6 +173,11 @@ set(XGC2_ACADOS_RUNTIME_LIBRARY_DIRS "${XGC2_ACADOS_LIBRARY_DIR}")
 set(XGC2_ACADOS_COMPILE_DEFINITIONS ACADOS_WITH_OSQP ACADOS_WITH_QPOASES)
 
 macro(xgc2_acados_require)
+  foreach(_xgc2_acados_input IN ITEMS XGC2_ACADOS_IDENTITY_FILE XGC2_ACADOS_CODEGEN_PYTHON)
+    if(NOT EXISTS "${${_xgc2_acados_input}}")
+      message(FATAL_ERROR "xgc2-acados required input is missing: ${_xgc2_acados_input}=${${_xgc2_acados_input}}")
+    endif()
+  endforeach()
   foreach(_xgc2_acados_include IN LISTS XGC2_ACADOS_INCLUDE_DIRS)
     if(NOT EXISTS "${_xgc2_acados_include}")
       message(FATAL_ERROR "xgc2-acados include path is missing: ${_xgc2_acados_include}")
