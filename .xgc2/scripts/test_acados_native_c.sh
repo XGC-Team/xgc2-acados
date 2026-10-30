@@ -29,11 +29,11 @@ acados_with_osqp="$(read_lock ACADOS_WITH_OSQP ON)"
 blasfeo_target="$(read_lock BLASFEO_TARGET X64_AUTOMATIC)"
 hpipm_target="$(read_lock HPIPM_TARGET GENERIC)"
 
-if [[ -n "${acados_sha}" ]]; then
-  acados_git_tag="${acados_sha}"
-else
-  acados_git_tag="${acados_ref}"
+if [[ ! "${acados_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "acados.lock must pin an exact upstream commit SHA" >&2
+  exit 1
 fi
+acados_git_tag="${acados_sha}"
 
 export ACADOS_VENDOR_GIT_REPOSITORY="${acados_repository}"
 export ACADOS_VENDOR_GIT_TAG="${acados_git_tag}"

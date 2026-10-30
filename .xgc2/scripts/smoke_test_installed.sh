@@ -51,6 +51,10 @@ from acados_template.utils import (
 )
 
 acados_root = pathlib.Path(sys.argv[1]).resolve()
+assert acados_root in pathlib.Path(sys.modules["acados_template"].__file__).resolve().parents
+lock = dict(line.split("=", 1) for line in (acados_root / "acados.lock").read_text().splitlines() if "=" in line)
+assert lock["ACADOS_REF"] == "v0.6.0", lock
+assert lock["ACADOS_SHA"] == "503364817c872d474ab5bed219c26760ac267769", lock
 casadi_path = pathlib.Path(ca.__file__).resolve()
 assert acados_root / "python" in casadi_path.parents, casadi_path
 assert acados_root / "python" in pathlib.Path(deprecated.__file__).resolve().parents
@@ -88,7 +92,8 @@ with tempfile.TemporaryDirectory(prefix="xgc2-acados-codegen-") as tmp:
 
     ocp = AcadosOcp()
     ocp.model = model
-    ocp.dims.N = 2
+    ocp.name = model.name
+    ocp.solver_options.N_horizon = 2
     ocp.solver_options.tf = 1.0
     ocp.cost.cost_type = "LINEAR_LS"
     ocp.cost.cost_type_e = "LINEAR_LS"
@@ -100,10 +105,13 @@ with tempfile.TemporaryDirectory(prefix="xgc2-acados-codegen-") as tmp:
     ocp.cost.yref = np.zeros((2,))
     ocp.cost.yref_e = np.zeros((1,))
     ocp.constraints.x0 = np.zeros((1,))
-    ocp.code_export_directory = str(tmp_path / "c_generated_code")
-    ocp.json_file = str(tmp_path / "xgc2_probe_ocp.json")
-    AcadosOcpSolver.generate(ocp, json_file=ocp.json_file)
+    ocp.code_gen_options.code_export_directory = str(tmp_path / "c_generated_code")
+    ocp.code_gen_options.json_file = "xgc2_probe_ocp.json"
+    AcadosOcpSolver.generate(ocp)
     assert (tmp_path / "c_generated_code" / "acados_solver_xgc2_probe.c").is_file()
+    assert (tmp_path / "c_generated_code" / "xgc2_probe_ocp.json").is_file()
+    solver = AcadosOcpSolver(ocp, generate=False, build=True)
+    assert solver.solve() == 0, "generated solver did not solve the probe OCP"
 PY
 
 probe_ws="${XGC2_ACADOS_SMOKE_WS:-$(mktemp -d -t xgc2-acados-cmake-XXXXXX)}"
@@ -124,11 +132,13 @@ CMAKE
 cat > "${probe_ws}/src/link_probe.c" <<'C'
 #include <stddef.h>
 #include "acados/utils/mem.h"
+#include "acados_c/ocp_qp_interface.h"
 
 int main(void)
 {
   void *(*probe)(size_t, acados_size_t) = acados_malloc;
-  return probe == 0;
+  void (*qp_get)(ocp_qp_out *, int, const char *, void *) = ocp_qp_out_get;
+  return probe == 0 || qp_get == 0;
 }
 C
 

@@ -3,6 +3,12 @@
 System-level XGC2 package for the acados solver stack. This branch builds a
 normal Debian package named `xgc2-acados`; it is not a ROS or catkin package.
 
+The shared platform/algorithm baseline is upstream **v0.6.0**, pinned to
+`503364817c872d474ab5bed219c26760ac267769`. The XGC package version is
+`0.6.0-1` (with a distribution suffix). C/C++ libraries, Python templates and
+the renderer all come from this locked source and its submodules; algorithms
+must not supply another acados SDK from a historical workspace.
+
 The `noetic` branch remains as a historical ROS1 vendor package backup. New
 XGC2 packages should depend on this system package instead of `xgc2_acados`.
 
@@ -14,7 +20,7 @@ XGC2 packages should depend on this system package instead of `xgc2_acados`.
 - Building and installing `t_renderer`.
 - Installing C/C++ headers, shared libraries, Python templates, MATLAB setup
   helpers, a pinned CasADi Python module, and a CMake package config.
-- Publishing `xgc2-acados` for Ubuntu 20.04, 22.04, and 24.04 on amd64 and arm64.
+- Publishing `xgc2-acados` for Ubuntu 18.04, 20.04, 22.04, and 24.04 on amd64 and arm64.
 
 The repository intentionally does not commit upstream acados source, nested
 `.git` directories, or generated build artifacts.
@@ -100,7 +106,10 @@ sudo apt-get install -y ./.ci/debs/xgc2-acados_*.deb
 ./.xgc2/scripts/smoke_test_installed.sh
 ```
 
-CI runs this build for Ubuntu 20.04 and Ubuntu 24.04 on amd64 and arm64.
+CI runs this build for Ubuntu 18.04, 20.04, 22.04 and 24.04 on amd64 and arm64.
+Installed checks generate, compile and solve a small OCP with the v0.6.0 Python
+API and compile/link the four-argument OCP-QP C getter. Python template package
+metadata is not the upstream release identity; use the installed `acados.lock`.
 
 ### Native, SDK and runtime staging
 

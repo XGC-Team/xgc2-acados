@@ -97,6 +97,7 @@ mkdir -p \
   "${pkg_root}/usr/lib/cmake/xgc2_acados"
 
 cp -a "${stage_dir}/opt" "${pkg_root}/"
+install -m 0644 "${repo_root}/acados.lock" "${pkg_root}${prefix}/acados.lock"
 python3 "${script_dir}/lazy_plot_exports.py" "${pkg_root}${prefix}/interfaces/acados_template/acados_template/__init__.py"
 
 cat > "${pkg_root}/etc/ld.so.conf.d/xgc2-acados.conf" <<EOF

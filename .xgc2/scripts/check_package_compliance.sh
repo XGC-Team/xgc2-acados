@@ -50,8 +50,9 @@ if [[ ! "${product_version}" =~ ^[0-9]+(\.[0-9]+){2}-[0-9]+$ ]]; then
 fi
 grep -q 'package_base_version="${PACKAGE_BASE_VERSION:-$(product_version)}"' .xgc2/scripts/build_deb.sh
 
-if ! grep -q '^ACADOS_REF=' acados.lock; then
-  echo "acados.lock must pin ACADOS_REF." >&2
+if ! grep -Eq '^ACADOS_REF=v[0-9]+\.[0-9]+\.[0-9]+$' acados.lock ||
+   ! grep -Eq '^ACADOS_SHA=[0-9a-f]{40}$' acados.lock; then
+  echo "acados.lock must pin a release tag and exact upstream commit SHA." >&2
   exit 1
 fi
 
