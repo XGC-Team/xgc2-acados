@@ -92,15 +92,25 @@ chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
 
 cp -a "${repo_root}/README.md" "${repo_root}/acados.lock" "${pkg_root}/usr/share/doc/${package_name}/"
 
-find "${pkg_root}" -type d -exec chmod 0755 {} +
-find "${pkg_root}" -type f -exec chmod 0644 {} +
+# The controlled interpreter/wheels are prepared binary inputs. Preserve their
+# modes and bytes: Bionic binutils can corrupt the newer CPython ELF when it
+# rewrites it, even though strip reports only a warning.
+runtime_root="${pkg_root}${prefix}/codegen-python"
+find "${pkg_root}" -path "${runtime_root}" -prune -o -type d -exec chmod 0755 {} +
+find "${pkg_root}" -path "${runtime_root}" -prune -o -type f -exec chmod 0644 {} +
 chmod 0755 "${pkg_root}/DEBIAN" "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/postrm"
 chmod 0755 "${pkg_root}${prefix}/setup.bash" "${pkg_root}${prefix}/bin/t_renderer"
+# Strip only binaries compiled by this build, never a copied Python runtime or
+# vendored wheel. Fail visibly if our own native outputs cannot be processed.
+find "${pkg_root}${prefix}/lib" -type f \( -name '*.so' -o -name '*.so.*' \) \
+  -exec strip --strip-unneeded {} +
+strip --strip-unneeded "${pkg_root}${prefix}/bin/t_renderer"
 if [[ "${package_distribution}" == bionic ]]; then
-  find "${pkg_root}${prefix}/codegen-python/bin" -type f -name 'python3*' -exec chmod 0755 {} +
+  runtime_input="${XGC2_ACADOS_CODEGEN_INPUT:-/opt/xgc2/acados-codegen-python}"
+  for runtime_file in bin/python3 bin/python3.12 lib/libpython3.12.so.1.0 lib/libstdc++.so.6.0.30 lib/libgcc_s.so.1; do
+    cmp "${runtime_input}/${runtime_file}" "${runtime_root}/${runtime_file}"
+  done
 fi
-find "${pkg_root}${prefix}" -type f \( -name '*.so' -o -name '*.so.*' -o -perm -0100 \) \
-  -exec strip --strip-unneeded {} + 2>/dev/null || true
 
 fakeroot dpkg-deb --build "${pkg_root}" "${output_dir}/${package_name}_${version}_${arch}.deb" >/dev/null
 dpkg-deb -I "${output_dir}/${package_name}_${version}_${arch}.deb"
